@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// Bot token is managed centrally — users only need to provide their Chat ID.
-const BOT_TOKEN = '8713519999:AAE7lqqUVZmSMM3hU_0pCGg4aawp5JF6cSU';
+// Bot token is loaded from environment variables — users only need their Chat ID.
+const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 const STORAGE_KEY = 'stellar_autopay_telegram';
 
 function loadConfig() {
