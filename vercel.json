@@ -1,0 +1,9 @@
+{
+  "projectName": "stellarautopay",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "env": {
+    "VITE_TELEGRAM_BOT_TOKEN": "@telegram_bot_token"
+  }
+}
