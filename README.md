@@ -1,145 +1,79 @@
 # Stellar Autopay
 
-> Automated recurring & scheduled payment system built on the Stellar blockchain (testnet).  
-> No secret keys. No backend. Fully on-chain bill management via Soroban smart contracts.
+> Automated recurring & one-time payment system built on the Stellar blockchain.  
+> No secret keys. No backend server. Fully on-chain via Soroban smart contracts.
 
 ---
 
-## 🔗 Links
+## 🔗 Quick Links
 
 | | |
 |---|---|
 | **Live Demo** | [https://stellarautopay.vercel.app](https://stellarautopay.vercel.app) |
 | **Smart Contract** | [`CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS`](https://stellar.expert/explorer/testnet/contract/CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS) |
 | **GitHub** | [https://github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay) |
-| **User Feedback Form** | [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform) |
-| **Feedback Responses (Excel)** | [View / Download Excel Sheet](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
+| **Network** | Stellar Testnet |
 | **Telegram Bot** | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot) |
 
 ---
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Smart Contract](#smart-contract)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Usage Guide](#usage-guide)
-- [Security Model](#security-model)
-- [Project Structure](#project-structure)
-- [Test Wallet Addresses](#test-wallet-addresses)
-- [User Feedback & Onboarding](#user-feedback--onboarding)
-- [Improvement Plan](#improvement-plan)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Smart Contract](#smart-contract)
+4. [Tech Stack](#tech-stack)
+5. [Getting Started](#getting-started)
+6. [Usage Guide](#usage-guide)
+7. [Security Model](#security-model)
+8. [Project Structure](#project-structure)
+9. [User Feedback & Onboarding](#user-feedback--onboarding)
+10. [Improvement Plan](#improvement-plan)
 
 ---
 
 ## Overview
 
-**Stellar Autopay** is a React single-page application that brings automated recurring payments to the Stellar blockchain. Users connect their wallet (Freighter, xBull, Lobstr, Albedo), define payment schedules, and optionally enable a **Session Signing Key** system so payments execute automatically — no manual approval needed for each transaction.
+**Stellar Autopay** is a React single-page application that brings scheduled and automated recurring payments to the Stellar blockchain. Users connect their wallet, define payment rules (amount, recipient, frequency), and let the app execute payments automatically — no manual approval needed for each transaction.
 
-All bill data and payment history are stored **on-chain** via a Soroban smart contract deployed on Stellar testnet. No backend server is required.
+All bill data and payment history live **on-chain** in a Soroban smart contract. There is no backend, no database, and no custody of user funds.
 
 ---
 
 ## ✨ Features
 
-### 💳 Wallet Connect (No Secret Key)
-- Connect via Stellar Wallets Kit (Freighter, xBull, Lobstr, Albedo, and more)
-- Secret key never enters the application
-- Live XLM & USDC balance display from Horizon testnet API
+### 💳 Non-Custodial Wallet Connect
+- Supports Freighter, xBull, Lobstr, Albedo via Stellar Wallets Kit
+- Secret key never touches the application
+- Live XLM and USDC balance display
 
-### 📅 Bill Management (On-Chain)
-- Add recurring and one-time scheduled payments
+### 📅 On-Chain Bill Management
+- Create recurring (weekly / biweekly / monthly / monthly on specific day / quarterly) and one-time payments
 - Supported assets: **XLM** and **USDC**
-- Supported frequencies: Weekly, Biweekly, Monthly, Monthly on specific day, Quarterly, One-Time
-- Smart month-end handling: 31 → 30 in April, 28/29 in February (leap-year aware)
-- Pause, resume, and delete bills
-- Default view shows unpaid bills sorted by due date (soonest first)
-- All bills stored in Soroban smart contract — persists across sessions and devices
+- Pause, resume, and delete bills at any time
+- Default dashboard view shows unpaid bills sorted by due date (soonest first)
+- All data stored in the Soroban contract — persists across sessions and devices
 
 ### ⚡ Auto-Pay Engine
-- **Session Signing Key** system: on first enable, browser generates a temporary keypair → user signs one `setOptions` transaction adding it as an account signer → subsequent payments are signed automatically
-- Payment engine polls every 15 seconds for due bills
-- Balance check before each payment — skips if insufficient
-- On success: logs tx hash to on-chain payment history, updates next due date
-- On failure: logs error, retries next cycle
-- Auto-Pay OFF mode: Freighter popup for each due payment (manual approval)
+- One-time wallet signature adds a **session signing key** to the account
+- Payment engine polls every 15 seconds; executes any bill that is due
+- Checks balance before each payment; skips if insufficient
+- Records every attempt on-chain: tx hash, amount, date, status
+- Without Auto-Pay: Freighter signs each payment manually (one popup per payment)
 
-### 🗓 Smart Date Scheduling
-- **Monthly on specific day**: choose day 1–31; engine clamps to last day of short months
-- **February handling**: day 29/30/31 automatically maps to 28 (or 29 on leap year)
-- **30-second tolerance**: prevents clock jitter from missing payments
-- `paidBillsRef` in-memory guard + localStorage "paid-keys" persistent guard prevent double payments
-
-### 📊 Payment History (On-Chain)
-- All payment attempts recorded in Soroban contract: bill name, amount, date, tx hash, status
-- Links to [Stellar Expert](https://stellar.expert/explorer/testnet) for each transaction
-- History persists across page reloads and logins
+### 📊 On-Chain Payment History
+- Every payment attempt (success / failed / skipped) stored in the contract
+- Direct links to [Stellar Expert](https://stellar.expert/explorer/testnet) for each tx hash
 
 ### 🔔 Telegram Notifications
-- Scan QR code or message [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot) to get started
-- Enter only your Chat ID — bot token is centrally managed
-- Notifications: 24 hours before payment, payment success, payment failure
+- Scan QR or message [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot), enter only your Chat ID
+- Alerts: 24 hours before payment due, payment success, payment failure
 
 ### 📉 Dashboard Metrics
-- Total paid this month
-- Active recurring bills
-- Scheduled one-time payments
-- Due now count
-- Next payment date
-- Completed payments (includes both `completed` and `paid` statuses)
+- Paid this month · Active bills · Due now · Next payment · Completed total
 
 ### ⚠️ Low Balance Warning
-- Banner displayed when wallet XLM balance is below the sum of upcoming due payments
-
-### 💬 User Feedback
-- Embedded Google Form in the app for collecting user feedback
-- Collects: name, email, wallet address, product rating (1–5)
-
----
-
-## 🏗 Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                   React Frontend                │
-│                                                 │
-│  useWallet ──────► Stellar Wallets Kit          │
-│      │             (Freighter / xBull / Lobstr) │
-│      │                                          │
-│  useBills ───────► contractClient.js            │
-│      │                    │                     │
-│  usePaymentEngine         │                     │
-│      │             ┌──────▼──────────────┐      │
-│  usePaymentHistory │  Soroban RPC         │      │
-│      │             │  soroban-testnet     │      │
-│  useTelegram       └──────────┬──────────┘      │
-│                               │                 │
-└───────────────────────────────┼─────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │  Soroban Smart        │
-                    │  Contract (Rust)      │
-                    │  CCGU4ERO...5NIS      │
-                    │                       │
-                    │  Per-user storage:    │
-                    │  • Bills              │
-                    │  • Payment History    │
-                    └───────────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │  Horizon Testnet      │
-                    │  (Classic payments)   │
-                    │  horizon-testnet.     │
-                    │  stellar.org          │
-                    └───────────────────────┘
-```
-
-**Two transaction layers:**
-1. **Classic Stellar payments** → XLM/USDC transfers via `TransactionBuilder + Operation.payment()` → Horizon API
-2. **Soroban contract calls** → Bill CRUD + payment history → Soroban RPC
+- Banner shown when XLM balance is below upcoming due payments
 
 ---
 
@@ -147,65 +81,69 @@ All bill data and payment history are stored **on-chain** via a Soroban smart co
 
 **Contract ID:** `CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS`  
 **Network:** Stellar Testnet  
-**Language:** Rust (Soroban SDK v22)  
-**Path:** `contracts/autopay/src/lib.rs`  
+**Language:** Rust · Soroban SDK v22  
+**Source:** `contracts/autopay/src/lib.rs`  
 **Explorer:** [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS)
 
-### Contract Functions
+### Exported Functions
 
-| Function | Description | Auth |
-|----------|-------------|------|
-| `add_bill(caller, name, recipient, amount, asset, bill_type, frequency, day_of_month, next_due)` | Create a new bill | Caller |
-| `pause_bill(caller, bill_id)` | Toggle pause/resume | Caller |
-| `delete_bill(caller, bill_id)` | Delete a bill | Caller |
-| `complete_bill(caller, bill_id)` | Mark one-time bill completed | Caller |
-| `mark_paid(caller, bill_id)` | Mark bill as paid after successful payment | Caller |
-| `update_status(caller, bill_id, status)` | Update bill status | Caller |
-| `update_next_due(caller, bill_id, new_next_due)` | Update next due date after recurring payment | Caller |
-| `get_all_bills(caller)` | Fetch all bills for caller | None |
-| `get_bill(caller, bill_id)` | Fetch single bill | None |
-| `get_active_bills(caller)` | Fetch only active/low-balance bills | None |
-| `record_payment(...)` | Record a payment attempt on-chain | Caller |
-| `get_payment_history(caller)` | Fetch all payment records | None |
+| Function | Description | Auth Required |
+|----------|-------------|---------------|
+| `add_bill` | Create a new payment schedule | Caller |
+| `pause_bill` | Toggle pause / resume | Caller |
+| `delete_bill` | Remove a bill permanently | Caller |
+| `complete_bill` | Mark one-time bill as completed | Caller |
+| `mark_paid` | Mark bill as paid after on-chain transfer | Caller |
+| `update_status` | Update bill status | Caller |
+| `update_next_due` | Advance next due date after recurring payment | Caller |
+| `get_all_bills` | Fetch all bills for a wallet | None |
+| `get_bill` | Fetch single bill | None |
+| `get_active_bills` | Fetch only active / low-balance bills | None |
+| `record_payment` | Write a payment attempt to on-chain history | Caller |
+| `get_payment_history` | Fetch all payment records for a wallet | None |
 
-### Storage Design
+### Storage Layout
+
 Per-user namespace — no global owner, no initialization required:
+
 ```
 DataKey::Bill(Address, u64)        → Bill struct
 DataKey::BillIds(Address)          → Vec<u64>
-DataKey::NextId(Address)           → u64 (counter)
+DataKey::NextId(Address)           → u64
 DataKey::Payment(Address, u64)     → PaymentRecord struct
 DataKey::PaymentIds(Address)       → Vec<u64>
-DataKey::PaymentNextId(Address)    → u64 (counter)
+DataKey::PaymentNextId(Address)    → u64
 ```
 
 ### Wallets That Have Used This Contract
 
-The following Stellar testnet addresses have interacted with this contract and can be verified on [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet):
+Verified on [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet):
 
-| # | Wallet Address |
-|---|----------------|
-| 1 | `GAJXYRRBECPQVCOCCLBCCZ2KGGNEHL32TLJRT2JWLNVE4HJ35OAKAPH2` |
-| 2 | `GC4COEPJQRXZFTRZJYOYEIHVX6OCSZD5GMOAI6JGRDM3Y33VKBLODYUE` |
-| 3 | `GDQJJRU6LA6R5KT6AZA6P2H7NGOC4EQCMZALQBTPKXFJLVT32QXWFXYW` |
-| 4 | `GCNA5EMJNXZPO57ARVJYQ5SN2DYYPD6ZCCENQ5AQTMVNKN77RDIPMI3A` |
-| 5 | `GBZ7MNALWHYZQPX4SJWU5SMDTD3YIWTG4XTBJ2IRGAAGF2JRXDDQM4U` |
+| # | Wallet Address | Actions |
+|---|----------------|---------|
+| 1 | `GC4COEPJQRXZFTRZJYOYEIHVX6OCSZD5GMOAI6JGRDM3Y33VKBLODYUE` | add_bill, mark_paid, pause_bill |
+| 2 | `GCNA5EMJNXZPO57ARVJYQ5SN2DYYPD6ZCCENQ5AQTMVNKN77RDIPMI3A` | add_bill, record_payment, update_next_due |
+| 3 | `GALDPLQ62RAX3V7RJE73D3C2F4SKHGCJ3MIYJ4MLU2EAIUXBDSUVS7SA` | add_bill, record_payment, mark_paid |
+| 4 | `GDBOBVGP6HNLL66IOTSR6COGSZYRTSRDXBUD2CDDN3C5XGUT23TQ54J2` | add_bill, record_payment, mark_paid |
+| 5 | `GAJXYRRBECPQVCOCCLBCCZ2KGGNEHL32TLJRT2JWLNVE4HJ35OAKAPH2` | add_bill, record_payment, mark_paid |
+| 6 | `GD72JZQAJPGLSLND6GPTSZ64PWMVY3JP5QKQJ32RW2GJCSVOSBPNX2EF` | add_bill, record_payment, mark_paid |
+| 7 | `GDQJJRU6LA6R5KT6AZA6P2H7NGOC4EQCMZALQBTPKXFJLVT32QXWFXYW` | Contract deployer |
 
 ### Build & Deploy
 
 ```bash
 cd contracts/autopay
 
-# Build
+# Build WASM
 stellar contract build
 
-# Test
+# Run tests
 cargo test
 
-# Deploy (requires Stellar CLI + funded testnet account)
+# Deploy to testnet
 stellar contract deploy \
   --wasm target/wasm32v1-none/release/autopay_contract.wasm \
-  --source <YOUR_ACCOUNT_ALIAS> \
+  --source <YOUR_STELLAR_CLI_ALIAS> \
   --network testnet
 ```
 
@@ -215,14 +153,13 @@ stellar contract deploy \
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend Framework | React 19 + Vite 8 |
+| Frontend | React 19 + Vite 8 |
 | Blockchain SDK | `@stellar/stellar-sdk` v15 |
 | Wallet Integration | `@creit.tech/stellar-wallets-kit` v2 |
-| Smart Contracts | Rust + Soroban SDK v22 |
+| Smart Contract | Rust + Soroban SDK v22 |
 | Network | Stellar Testnet (Horizon + Soroban RPC) |
-| Storage | Soroban contract (primary) + localStorage (paid-keys guard only) |
-| Notifications | Telegram Bot API (direct browser fetch) |
-| Deployment | Vercel (static SPA) |
+| Notifications | Telegram Bot API (direct browser fetch, no server) |
+| Hosting | Vercel |
 
 ---
 
@@ -231,69 +168,43 @@ stellar contract deploy \
 ### Prerequisites
 
 - Node.js 18+
-- [Rust](https://rustup.rs/) + `wasm32v1-none` target
-- [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install)
-- [Freighter Wallet](https://freighter.app/) browser extension (or another supported wallet)
-- A funded Stellar **testnet** account ([Stellar Friendbot](https://friendbot.stellar.org/?addr=YOUR_PUBLIC_KEY))
+- [Freighter Wallet](https://freighter.app/) browser extension
+- A funded Stellar **testnet** account → [Friendbot](https://friendbot.stellar.org/?addr=YOUR_KEY)
 
-### Install & Run
+### Local Setup
 
 ```bash
-# Clone
 git clone https://github.com/murat48/stellarautopay.git
 cd stellarautopay
-
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev
-# → http://localhost:5173
-
-# Production build
-npm run build
+npm run dev          # http://localhost:5173
 ```
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file:
 
 ```
-VITE_TELEGRAM_BOT_TOKEN=<your_telegram_bot_token>
+VITE_TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+```
+
+### Production Build
+
+```bash
+npm run build        # outputs to dist/
+vercel deploy --prod # or push to GitHub for auto-deploy
 ```
 
 ---
 
 ## 📖 Usage Guide
 
-### 1. Connect Your Wallet
-Click **Connect Wallet** → choose your wallet extension (Freighter recommended for testnet) → approve the connection request.
-
-### 2. Add a Payment
-Click **+ Add Payment** → fill in:
-- **Name**: friendly label (e.g. "Rent", "Netflix")
-- **Recipient**: Stellar public key (G...)
-- **Amount**: in XLM or USDC
-- **Type**: Recurring or One-Time
-- **Frequency** (recurring): Weekly / Biweekly / Monthly / Monthly on day X / Quarterly
-- **Scheduled Date/Time**: when the first (or only) payment should occur
-
-### 3. Enable Auto-Pay (Recommended)
-Click **⚡ Enable Auto-Pay** → your wallet signs one `setOptions` transaction adding a session key as account signer → all future payments in this session are signed automatically.
-
-> Without Auto-Pay, Freighter opens a popup for each due payment (manual mode).
-
-### 4. Monitor Payments
-- **Dashboard**: live bill cards with status badges and next due dates (unpaid view by default, sorted soonest first)
-- **Metrics Strip**: month total, active bills, due now count
-- **Payment History**: full on-chain log of every attempt with tx hash links to Stellar Expert
-- **Low Balance Warning**: banner appears when balance is insufficient for upcoming payments
-
-### 5. Telegram Alerts
-Click **📨 Telegram** → scan the QR code or message [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot) → get your Chat ID → paste it in → Test → Save.
-
-### 6. Disable Auto-Pay
-Click **⚡ Auto-Pay ON** → **Disable** → your wallet signs one transaction to remove the session signer from your account.
+1. **Connect Wallet** — Click Connect Wallet, choose Freighter (recommended for testnet), approve.
+2. **Add a Payment** — Click `+ Add Payment`, fill in recipient address, amount (XLM or USDC), frequency, and scheduled date.
+3. **Enable Auto-Pay** — Click ⚡ Enable Auto-Pay → sign one `setOptions` tx → all future payments are automatic.
+4. **Monitor** — Dashboard shows unpaid bills sorted by due date. Metrics strip shows key numbers.
+5. **Telegram Alerts** — Click 📨 Telegram, scan QR or search @StellarAutopay_Bot, paste your Chat ID, Test, Save.
+6. **Disable Auto-Pay** — Click ⚡ Auto-Pay ON → Disable → removes session signer from your account.
 
 ---
 
@@ -301,12 +212,11 @@ Click **⚡ Auto-Pay ON** → **Disable** → your wallet signs one transaction 
 
 | Risk | Mitigation |
 |------|-----------|
-| Secret key exposure | **Never entered** — wallet extensions hold keys; app only sees public key |
-| Auto-pay abuse | Session signing key has weight=1 only; removed on disable/disconnect |
-| Session key leakage | Stored only in React `useRef` (memory) — never localStorage, never persisted |
-| Double payments | `paidBillsRef` (in-memory) + localStorage paid-keys guard prevent re-execution |
-| Stale bill re-payments | `mark_paid` writes on-chain; guard catches contract write failures |
-| Contract manipulation | Per-user `caller.require_auth()` on all write functions |
+| Secret key exposure | Never entered; wallet extensions hold all keys |
+| Auto-pay abuse | Session key has weight=1; removed immediately on disable/disconnect |
+| Session key leakage | Lives only in React `useRef` (RAM) — never written to localStorage |
+| Double payments | In-memory `paidBillsRef` + localStorage paid-keys guard |
+| Contract manipulation | `caller.require_auth()` on every write function |
 
 ---
 
@@ -314,34 +224,30 @@ Click **⚡ Auto-Pay ON** → **Disable** → your wallet signs one transaction 
 
 ```
 stellarautopay/
-├── contracts/
-│   └── autopay/
-│       └── src/lib.rs              # Soroban smart contract (Rust)
+├── contracts/autopay/src/lib.rs     # Soroban smart contract (Rust)
 ├── src/
 │   ├── utils/
-│   │   ├── stellar.js              # Horizon payment helpers (build/sign/submit)
-│   │   └── contractClient.js       # Direct Soroban RPC client
+│   │   ├── stellar.js               # Horizon payment builder / signer
+│   │   └── contractClient.js        # Direct Soroban RPC client
 │   ├── hooks/
-│   │   ├── useWallet.js            # Wallet kit connect, auto-pay session key management
-│   │   ├── useBills.js             # Bill CRUD → Soroban contract
-│   │   ├── usePaymentEngine.js     # Auto-payment loop (15s polling)
-│   │   ├── usePaymentHistory.js    # On-chain payment history fetch
-│   │   └── useTelegram.js          # Telegram Bot API notifications
+│   │   ├── useWallet.js             # Wallet connect + session key management
+│   │   ├── useBills.js              # Bill CRUD (Soroban contract)
+│   │   ├── usePaymentEngine.js      # 15s auto-payment polling loop
+│   │   ├── usePaymentHistory.js     # On-chain payment history
+│   │   └── useTelegram.js           # Telegram Bot API notifications
 │   ├── components/
-│   │   ├── WalletConnect.jsx       # Login screen (wallet kit modal)
-│   │   ├── BillDashboard.jsx       # Bill cards grid with filter tabs
-│   │   ├── AddBillForm.jsx         # Add/schedule payment modal
-│   │   ├── PaymentHistory.jsx      # History table with explorer links
-│   │   ├── MetricsStrip.jsx        # Summary metrics bar
-│   │   ├── LowBalanceWarning.jsx   # Insufficient balance banner
-│   │   ├── TelegramSettings.jsx    # Telegram bot configuration modal
-│   │   └── FeedbackForm.jsx        # Embedded Google Form modal
-│   ├── App.jsx
-│   ├── App.css
+│   │   ├── WalletConnect.jsx        # Login screen
+│   │   ├── BillDashboard.jsx        # Bill cards + filter tabs
+│   │   ├── AddBillForm.jsx          # Schedule payment modal
+│   │   ├── PaymentHistory.jsx       # History table with tx links
+│   │   ├── MetricsStrip.jsx         # Summary numbers bar
+│   │   ├── LowBalanceWarning.jsx    # Balance warning banner
+│   │   ├── TelegramSettings.jsx     # Telegram config modal
+│   │   └── FeedbackForm.jsx         # Embedded Google Form
+│   ├── App.jsx / App.css
 │   └── main.jsx
-├── package.json
-├── vite.config.js
-└── README.md
+├── vercel.json
+└── package.json
 ```
 
 ---
@@ -350,46 +256,54 @@ stellarautopay/
 
 ### Google Form
 
-Users can submit feedback via the **💬 Feedback** button in the app or directly at:
+Users submit feedback via the **💬 Feedback** button in the app or directly:
 
-**→ [https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)**
+**→ [Open Feedback Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)**
 
-The form collects:
+Fields collected:
 - Full Name
 - Email Address
-- Stellar Testnet Wallet Address (G...)
-- Product Rating (1 – 5 stars)
+- Stellar Testnet Wallet Address
+- Product Rating (1–5 stars)
 - Comments / Suggestions
 
 ### Exported Responses (Excel)
 
-All form responses are exported to Google Sheets and available here:
+All form responses exported to Google Sheets:
 
-**→ [View Feedback Responses (Google Sheets / Excel)](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)**
+**→ [View Feedback Responses & Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)**
 
-> Export the sheet as `.xlsx` from **Google Sheets → File → Download → Microsoft Excel** for offline analysis.
+To download as Excel: open in Google Sheets → **File → Download → Microsoft Excel (.xlsx)**
 
 ---
 
 ## 🔄 Improvement Plan
 
-Based on feedback collected from the first round of testnet users, the following improvements are planned for the next iteration:
+### Iteration 1 — Completed (based on early tester feedback)
 
-### Completed Improvements (Phase 1 → Phase 2)
+| # | Problem Reported | Fix Applied | Commit |
+|---|-----------------|-------------|--------|
+| 1 | `mark_paid` and `record_payment` not firing in manual mode | Added `externalSignFn` parameter so contract writes work without auto-pay | [55d36b7](https://github.com/murat48/stellarautopay/commit/55d36b7) |
+| 2 | Auto-pay failing with HTTP 400 error | Improved error extraction from Horizon `result_codes`; added readable error messages | [fff4287](https://github.com/murat48/stellarautopay/commit/fff4287) |
+| 3 | `op_too_many_signers` when enabling auto-pay | Orphaned session keys are now removed atomically in the same transaction | [65e5c14](https://github.com/murat48/stellarautopay/commit/65e5c14) |
+| 4 | Fees too high (1M stroops per contract call) | Reduced Soroban fee to 300K, classic tx fee to 1K stroops | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
+| 5 | Multiple Freighter popups for a single payment | Eliminated repeated popups in manual mode — one popup per payment | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
+| 6 | Telegram test button silently did nothing before saving | `testConnection` now bypasses `enabled` check, sends directly with provided Chat ID | [9d872e9](https://github.com/murat48/stellarautopay/commit/9d872e9) |
+| 7 | Dashboard showed all bills by default, hard to find unpaid | Default filter changed to "Unpaid", sorted soonest-due first | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 8 | Completed count showed 0 despite paid bills existing | Fixed metrics to count both `completed` and `paid` statuses | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
+| 9 | Telegram instructions in Turkish, hard for international users | Full English UI + QR code for @StellarAutopay_Bot added | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
+| 10 | Old contract had stale data from development | Redeployed fresh contract to testnet | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
 
-| # | Improvement | Commit |
-|---|------------|--------|
-| 1 | Fixed `mark_paid` and `record_payment` not firing in manual mode — added `externalSignFn` parameter | [55d36b7](https://github.com/murat48/stellarautopay/commit/55d36b7) |
-| 2 | Fixed auto-pay `400` error — improved error extraction from Horizon `result_codes` | [fff4287](https://github.com/murat48/stellarautopay/commit/fff4287) |
-| 3 | Fixed `op_too_many_signers` — orphaned session keys are now removed atomically in same tx | [65e5c14](https://github.com/murat48/stellarautopay/commit/65e5c14) |
-| 4 | Reduced tx fees: Soroban 1M→300K stroops, classic 10K→1K stroops | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
-| 5 | Single Freighter popup in manual mode (eliminated repeated popups) | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
-| 6 | Telegram notifications translated to English, centralized bot token | [fff4287](https://github.com/murat48/stellarautopay/commit/fff4287) |
-| 7 | Telegram test works before saving (bypasses `enabled` check, uses `overrideChatId`) | [9d872e9](https://github.com/murat48/stellarautopay/commit/9d872e9) |
-| 8 | Payments view: default to "Unpaid" filter, sorted by due date ascending | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
-| 9 | Metrics strip: Completed count now includes `paid` status bills | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
-| 10 | Balance display improved to color-coded pill chips (XLM blue, USDC green) | [9d872e9](https://github.com/murat48/stellarautopay/commit/9d872e9) |
-| 11 | New contract deployed with clean state | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+### Next Phase — Planned Improvements
+
+Based on ongoing user feedback patterns:
+
+1. **Mainnet support** — Add a testnet / mainnet toggle with appropriate risk warnings
+2. **USDC recurring auto-pay** — Currently USDC bills require manual signing; fix trustline detection
+3. **Offline notifications via Service Worker** — Send alerts even when the browser tab is closed
+4. **Bill categories & tags** — Tag bills (rent, utilities, subscriptions) and filter by category
+5. **CSV / Excel payment history export** — Let users download on-chain history for accounting
+6. **Mobile layout** — Optimize for mobile browsers; Freighter mobile support
 
 ---
 
@@ -403,273 +317,4 @@ MIT License
 
 - [Stellar Development Foundation](https://stellar.org) — Horizon API & Soroban smart contracts
 - [Creit Tech](https://github.com/Creit-Tech/Stellar-Wallets-Kit) — Stellar Wallets Kit
-- [Stellar Expert](https://stellar.expert) — Transaction explorer
-
-
-> Automated recurring & scheduled payment system built on the Stellar blockchain (testnet).  
-> No secret keys. No backend. Fully on-chain bill management via Soroban smart contracts.
-
----
-
-## 🔗 Links
-
-| | |
-|---|---|
-| **Live Demo** | _Deploy to Vercel/Netlify and add your URL here_ |
-| **Demo Video** | _Record and add your Loom/YouTube link here_ |
-| **Smart Contract** | [`CC7XBIWVBKEAKUMADCPRDC5O2WAI6D2WK5KJS4CTEKQ2ZS3TEHXYHSY5`](https://stellar.expert/explorer/testnet/contract/CC7XBIWVBKEAKUMADCPRDC5O2WAI6D2WK5KJS4CTEKQ2ZS3TEHXYHSY5) |
-| **User Feedback** | [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform) |
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Smart Contract](#smart-contract)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Usage Guide](#usage-guide)
-- [Security Model](#security-model)
-- [Project Structure](#project-structure)
-- [Test Wallet Addresses](#test-wallet-addresses)
-- [Demo Video](#demo-video)
-- [User Feedback](#user-feedback)
-- [Contributing](#contributing)
-
----
-
-## Overview
-
-**Stellar Autopay** is a React single-page application that brings automated recurring payments to the Stellar blockchain. Users connect their wallet (Freighter, xBull, Lobstr, Albedo), define payment schedules, and optionally enable a **Session Signing Key** system so payments execute automatically — no manual approval needed for each transaction.
-
-All bill data and payment history are stored **on-chain** via a Soroban smart contract deployed on Stellar testnet. No backend server is required.
-
----
-
-## ✨ Features
-
-### 💳 Wallet Connect (No Secret Key)
-- Connect via Stellar Wallets Kit (Freighter, xBull, Lobstr, Albedo, and more)
-- Secret key never enters the application
-- Live balance display from Horizon testnet API
-
-### 📅 Bill Management (On-Chain)
-- Add recurring and one-time scheduled payments
-- Supported assets: **XLM** and **USDC**
-- Supported frequencies: Weekly, Biweekly, Monthly, Monthly on specific day, Quarterly, One-Time
-- Smart month-end handling: 31 → 30 in April, 28/29 in February (leap-year aware)
-- Pause, resume, and delete bills
-- All bills stored in Soroban smart contract — persists across sessions and devices
-
-### ⚡ Auto-Pay Engine
-- **Session Signing Key** system: on first enable, browser generates a temporary keypair → user signs one `setOptions` transaction adding it as an account signer → subsequent payments are signed automatically
-- Payment engine polls every 60 seconds for due bills
-- Balance check before each payment — skips if insufficient
-- On success: logs tx hash to on-chain payment history, updates next due date
-- On failure: logs error, retries next cycle
-- Auto-Pay OFF mode: Freighter popup for each due payment (manual approval)
-
-### 🗓 Smart Date Scheduling
-- **Monthly on specific day**: choose day 1–31; engine clamps to last day of short months
-- **February handling**: day 29/30/31 automatically maps to 28 (or 29 on leap year)
-- **30-second tolerance**: prevents clock jitter from missing payments
-- `paidBillsRef` in-memory guard + localStorage "paid-keys" persistent guard prevent double payments
-
-### 📊 Payment History (On-Chain)
-- All payment attempts recorded in Soroban contract: bill name, amount, date, tx hash, status
-- Links to [Stellar Expert](https://stellar.expert/explorer/testnet) and [Horizon API](https://horizon-testnet.stellar.org) for each transaction
-- History persists across page reloads and logins
-
-### 🔔 Telegram Notifications
-- Configure bot token + chat ID for real-time alerts
-- Notifications sent for: payment approaching (1 hour before), payment successful, payment failed
-- Powered by Telegram Bot API — no server required, direct browser fetch
-
-### 📉 Dashboard Metrics
-- Total paid this month
-- Active recurring bills
-- Scheduled one-time payments
-- Due now count
-- Next payment date
-- Completed payments
-
-### ⚠️ Low Balance Warning
-- Banner displayed when wallet XLM balance is below the sum of upcoming due payments
-
-### 💬 User Feedback
-- Embedded Google Form in the app for collecting user feedback
-- Collects: name, email, wallet address, product rating
-
----
-
-## 🏗 Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                   React Frontend                │
-│                                                 │
-│  useWallet ──────► Stellar Wallets Kit          │
-│      │             (Freighter / xBull / Lobstr) │
-│      │                                          │
-│  useBills ───────► contractClient.js            │
-│      │                    │                     │
-│  usePaymentEngine         │                     │
-│      │             ┌──────▼──────────────┐      │
-│  usePaymentHistory │  Soroban RPC         │      │
-│      │             │  soroban-testnet     │      │
-│  useTelegram       └──────────┬──────────┘      │
-│                               │                 │
-└───────────────────────────────┼─────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │  Soroban Smart        │
-                    │  Contract (Rust)      │
-                    │  CC7XBIWV...YSY5      │
-                    │                       │
-                    │  Per-user storage:    │
-                    │  • Bills              │
-                    │  • Payment History    │
-                    └───────────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │  Horizon Testnet      │
-                    │  (Classic payments)   │
-                    │  horizon-testnet.     │
-                    │  stellar.org          │
-                    └───────────────────────┘
-```
-
-**Two transaction layers:**
-1. **Classic Stellar payments** → XLM/USDC transfers via `TransactionBuilder + Operation.payment()` → Horizon API
-2. **Soroban contract calls** → Bill CRUD + payment history → Soroban RPC
-
----
-
-## 📜 Smart Contract
-
-**Contract ID:** `CC7XBIWVBKEAKUMADCPRDC5O2WAI6D2WK5KJS4CTEKQ2ZS3TEHXYHSY5`  
-**Network:** Stellar Testnet  
-**Language:** Rust (Soroban SDK)  
-**Path:** `contracts/autopay/src/lib.rs`
-
-### Contract Functions
-
-| Function | Description | Auth |
-|----------|-------------|------|
-| `add_bill(caller, name, recipient, amount, asset, bill_type, frequency, day_of_month, next_due)` | Create a new bill | Caller |
-| `pause_bill(caller, bill_id)` | Toggle pause/resume | Caller |
-| `delete_bill(caller, bill_id)` | Delete a bill | Caller |
-| `complete_bill(caller, bill_id)` | Mark one-time bill completed | Caller |
-| `mark_paid(caller, bill_id)` | Mark bill as paid after successful payment | Caller |
-| `update_status(caller, bill_id, status)` | Update bill status | Caller |
-| `update_next_due(caller, bill_id, new_next_due)` | Update next due date after recurring payment | Caller |
-| `get_all_bills(caller)` | Fetch all bills for caller | None |
-| `get_bill(caller, bill_id)` | Fetch single bill | None |
-| `record_payment(...)` | Record a payment attempt on-chain | Caller |
-| `get_payment_history(caller)` | Fetch all payment records | None |
-
-### Storage Design
-Per-user namespace — no global owner, no initialization required:
-```
-DataKey::Bill(Address, u64)        → Bill struct
-DataKey::BillIds(Address)          → Vec<u64>
-DataKey::NextId(Address)           → u64 (counter)
-DataKey::Payment(Address, u64)     → PaymentRecord struct
-DataKey::PaymentIds(Address)       → Vec<u64>
-DataKey::PaymentNextId(Address)    → u64 (counter)
-```
-
-### Build & Deploy
-
-```bash
-cd contracts/autopay
-
-# Build
-cargo build --release --target wasm32v1-none
-
-# Test
-cargo test
-
-# Deploy (requires Stellar CLI + funded testnet account)
-stellar contract deploy \
-  --wasm target/wasm32v1-none/release/autopay.wasm \
-  --source <YOUR_ACCOUNT_ALIAS> \
-  --network testnet
-
-# Generate TypeScript bindings
-stellar contract bindings typescript \
-  --contract-id <CONTRACT_ID> \
-  --network testnet \
-  --output-dir src/contract-client
-```
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend Framework | React 19 + Vite 8 |
-| Blockchain SDK | `@stellar/stellar-sdk` v15 |
-| Wallet Integration | `@creit.tech/stellar-wallets-kit` v2 |
-| Smart Contracts | Rust + Soroban SDK |
-| Network | Stellar Testnet (Horizon + Soroban RPC) |
-| Storage | Soroban contract (primary) + localStorage (paid-keys guard only) |
-| Notifications | Telegram Bot API (direct browser fetch) |
-| Deployment | Vercel / Netlify (static SPA) |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- [Rust](https://rustup.rs/) + `wasm32v1-none` target
-- [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install)
-- [Freighter Wallet](https://freighter.app/) browser extension (or another supported wallet)
-- A funded Stellar **testnet** account ([Stellar Friendbot](https://friendbot.stellar.org/?addr=YOUR_PUBLIC_KEY))
-
-### Install & Run
-
-```bash
-# Clone
-git clone https://github.com/YOUR_USERNAME/stellarautopay.git
-cd stellarautopay
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-# → http://localhost:5173
-
-# Production build
-npm run build
-```
-
-### Deploy to Vercel
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deployments.
-
-### Deploy to Netlify
-
-```bash
-npm run build
-# Drag and drop the dist/ folder to https://app.netlify.com/drop
-```
-
----
-
-## 🙏 Acknowledgements
-
-- [Stellar Development Foundation](https://stellar.org) — Horizon API & Soroban smart contracts
-- [Creit Tech](https://github.com/Creit-Tech/Stellar-Wallets-Kit) — Stellar Wallets Kit
-- [Stellar Expert](https://stellar.expert) — Transaction explorer
+- [Stellar Expert](https://stellar.expert) — Testnet transaction explorer
