@@ -54,17 +54,38 @@ export default function useTelegram() {
     return resp.json();
   }, [config]);
 
-  const testConnection = useCallback(async () => {
+  // testConnection accepts an override chatId so the modal can test before saving
+  const testConnection = useCallback(async (overrideChatId) => {
+    const id = (overrideChatId || config.chatId || '').trim();
+    if (!id) return;
+    if (!BOT_TOKEN) {
+      setTestStatus('error: Bot token not configured. Check VITE_TELEGRAM_BOT_TOKEN env var.');
+      setTimeout(() => setTestStatus(null), 6000);
+      return;
+    }
     setTestStatus('sending');
     try {
-      await sendMessage('✅ *Stellar Autopay* connected successfully!\n\nYou will receive payment notifications here.');
+      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: id,
+          text: '✅ *Stellar Autopay* connected!\n\nYou will receive payment notifications here.',
+          parse_mode: 'Markdown',
+        }),
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.description || `HTTP ${resp.status}`);
+      }
       setTestStatus('success');
       setTimeout(() => setTestStatus(null), 3000);
     } catch (err) {
       setTestStatus('error: ' + (err.message || 'Failed'));
-      setTimeout(() => setTestStatus(null), 5000);
+      setTimeout(() => setTestStatus(null), 6000);
     }
-  }, [sendMessage]);
+  }, [config.chatId]);
 
   return {
     telegramConfig: config,

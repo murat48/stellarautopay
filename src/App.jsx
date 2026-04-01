@@ -77,9 +77,17 @@ function App() {
         <div className="header-right">
           <div className="wallet-info">
             <div className="wallet-balances">
-              <span className="balance">{(wallet.balances.XLM || 0).toFixed(2)} XLM</span>
+              <div className="balance-chip balance-xlm">
+                <span className="balance-icon">✦</span>
+                <span className="balance-amount">{(wallet.balances.XLM || 0).toFixed(2)}</span>
+                <span className="balance-ticker">XLM</span>
+              </div>
               {wallet.balances.USDC !== undefined && (
-                <span className="balance">{wallet.balances.USDC.toFixed(2)} USDC</span>
+                <div className="balance-chip balance-usdc">
+                  <span className="balance-icon">$</span>
+                  <span className="balance-amount">{wallet.balances.USDC.toFixed(2)}</span>
+                  <span className="balance-ticker">USDC</span>
+                </div>
               )}
             </div>
             <div className="wallet-meta">
