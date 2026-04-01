@@ -51,6 +51,7 @@ function App() {
     markBillPaid,
     addEntry,
     wallet.refreshBalance,
+    wallet.balances,
     sendTelegramMessage,
     wallet.walletSignAndSubmit,
     wallet.signTransaction

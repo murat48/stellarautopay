@@ -7,16 +7,12 @@ export default function TelegramSettings({
   testStatus,
   onClose,
 }) {
-  const [form, setForm] = useState({
-    botToken: config.botToken,
-    chatId: config.chatId,
-  });
+  const [chatId, setChatId] = useState(config.chatId);
 
   const handleSave = () => {
     onUpdate({
-      botToken: form.botToken.trim(),
-      chatId: form.chatId.trim(),
-      enabled: !!(form.botToken.trim() && form.chatId.trim()),
+      chatId: chatId.trim(),
+      enabled: !!chatId.trim(),
     });
     onClose();
   };
@@ -30,45 +26,35 @@ export default function TelegramSettings({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>📨 Telegram Notifications</h2>
+          <h2>📨 Telegram Bildirimleri</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="telegram-setup-info">
-          <p><strong>Setup Instructions:</strong></p>
+          <p><strong>Nasıl Kurulur?</strong></p>
           <ol>
-            <li>Open Telegram, search for <strong>@BotFather</strong></li>
-            <li>Send <code>/newbot</code> and follow the prompts</li>
-            <li>Copy the <strong>Bot Token</strong> you receive</li>
-            <li>Start a chat with your new bot, then visit:<br/>
-              <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code><br/>
-              to find your <strong>Chat ID</strong></li>
+            <li>Telegram'da <strong>@StellarAutopayBot</strong> adresine gidin ve <strong>Start</strong> tuşuna basın.</li>
+            <li>Bota herhangi bir mesaj gönderin (örn. <code>/start</code>).</li>
+            <li>Aşağıdaki linki tarayıcınızda açın ve <code>id</code> alanındaki numarayı kopyalayın:<br/>
+              <code>https://api.telegram.org/bot8713519999:AAE7lqqUVZmSMM3hU_0pCGg4aawp5JF6cSU/getUpdates</code>
+            </li>
+            <li>Kopyaladığınız numarayı aşağıdaki <strong>Chat ID</strong> alanına yapıştırın.</li>
           </ol>
-        </div>
-
-        <div className="form-group">
-          <label>Bot Token</label>
-          <input
-            type="password"
-            placeholder="123456789:ABCdefGHIjklMNOpqrSTUvwxYZ"
-            value={form.botToken}
-            onChange={(e) => setForm((prev) => ({ ...prev, botToken: e.target.value }))}
-          />
         </div>
 
         <div className="form-group">
           <label>Chat ID</label>
           <input
-            placeholder="e.g. 123456789"
-            value={form.chatId}
-            onChange={(e) => setForm((prev) => ({ ...prev, chatId: e.target.value }))}
+            placeholder="örn. 123456789"
+            value={chatId}
+            onChange={(e) => setChatId(e.target.value)}
           />
         </div>
 
         {testStatus && (
           <div className={`test-status ${testStatus === 'success' ? 'test-success' : testStatus === 'sending' ? 'test-sending' : 'test-error'}`}>
-            {testStatus === 'sending' && '⏳ Sending test message...'}
-            {testStatus === 'success' && '✅ Test message sent! Check your Telegram.'}
+            {testStatus === 'sending' && '⏳ Test mesajı gönderiliyor...'}
+            {testStatus === 'success' && '✅ Test mesajı gönderildi! Telegram\'ınızı kontrol edin.'}
             {testStatus.startsWith('error') && `❌ ${testStatus}`}
           </div>
         )}
@@ -77,21 +63,22 @@ export default function TelegramSettings({
           <button
             className="btn-secondary"
             onClick={onTest}
-            disabled={!form.botToken.trim() || !form.chatId.trim() || testStatus === 'sending'}
+            disabled={!chatId.trim() || testStatus === 'sending'}
           >
-            🧪 Test Connection
+            🧪 Bağlantıyı Test Et
           </button>
           <button className="btn-primary" onClick={handleSave}>
-            💾 Save & Enable
+            💾 Kaydet &amp; Etkinleştir
           </button>
         </div>
 
         {config.enabled && (
           <button className="btn-danger telegram-disable-btn" onClick={handleDisable}>
-            Disable Notifications
+            Bildirimleri Devre Dışı Bırak
           </button>
         )}
       </div>
     </div>
   );
 }
+

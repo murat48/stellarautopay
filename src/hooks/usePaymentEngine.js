@@ -78,7 +78,7 @@ function isPaymentDue(bill, now) {
   return now >= new Date(due.getTime() - 30_000); // 30s jitter only
 }
 
-export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, sendTelegramNotification, walletSignAndSubmit, walletSignFn) {
+export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn) {
   const processingRef = useRef(false);
   const notifiedRef = useRef(new Set());
   // Track bills already paid in this session to prevent double-payment on re-render / stale state
@@ -105,20 +105,28 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     const now = new Date();
 
     try {
-    // --- Telegram: notify upcoming payments (1 hour before) ---
+    // --- Telegram: notify upcoming payments (1 day before) ---
     if (sendTelegramNotification) {
-      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const upcomingBills = bills.filter(
         (b) =>
           b.status === 'active' &&
-          !isPaymentDue(b, now) &&              // not yet due (avoid double-notify)
-          new Date(b.nextDueDate) <= oneHourFromNow &&
+          !isPaymentDue(b, now) &&
+          new Date(b.nextDueDate) <= oneDayFromNow &&
           !notifiedRef.current.has(b.id + '_' + b.nextDueDate)
       );
       for (const bill of upcomingBills) {
-        const dueTime = new Date(bill.nextDueDate).toLocaleString();
-        const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
-        const msg = `⏰ *Payment Approaching*\n\n${typeLabel}: *${bill.name}*\nAmount: *${bill.amount} ${bill.asset}*\nDue: ${dueTime}\nRecipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
+        const dueTime = new Date(bill.nextDueDate).toLocaleString('tr-TR');
+        const typeLabel = bill.type === 'one-time' ? 'Tek seferlik ödeme' : 'Tekrarlayan fatura';
+        const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
+        const hasSufficientBalance = currentBalance >= parseFloat(bill.amount);
+
+        let msg = `⏰ *Yaklaşan Ödeme*\n\n${typeLabel}: *${bill.name}*\nMiktar: *${bill.amount} ${bill.asset}*\nÖdeme Tarihi: ${dueTime}\nAlıcı: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
+
+        if (!hasSufficientBalance) {
+          msg += `\n\n⚠️ *YETERSİZ BAKİYE UYARISI*\nMevcut ${bill.asset} bakiyeniz: *${currentBalance.toFixed(7)} ${bill.asset}*\nGerekli: *${bill.amount} ${bill.asset}*\nÖdemenin gerçekleşmesi için lütfen bakiyenizi yükleyin.`;
+        }
+
         try {
           await sendTelegramNotification(msg);
           notifiedRef.current.add(bill.id + '_' + bill.nextDueDate);
@@ -175,6 +183,12 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
             amount: bill.amount, asset: bill.asset,
             txHash: '', status: 'skipped', error: classified.message,
           }, publicKey, recordSignFn).catch(() => {});
+          if (sendTelegramNotification) {
+            const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
+            sendTelegramNotification(
+              `⚠️ *Yetersiz Bakiye — Ödeme Atlandı*\n\nFatura: *${bill.name}*\nGerekli: *${bill.amount} ${bill.asset}*\nMevcut bakiye: *${currentBalance.toFixed(7)} ${bill.asset}*\n\nLütfen bakiyenizi yükleyin.`
+            ).catch(() => {});
+          }
         } else {
           addEntry({
             billName: bill.name, billId: bill.id,
@@ -182,9 +196,11 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
             amount: bill.amount, asset: bill.asset,
             txHash: '', status: 'failed', error: classified.message,
           }, publicKey, recordSignFn).catch(() => {});
-        }
-        if (sendTelegramNotification) {
-          sendTelegramNotification(`❌ *Payment Failed*\n\n*${bill.name}*: ${classified.message}`).catch(() => {});
+          if (sendTelegramNotification) {
+            sendTelegramNotification(
+              `❌ *Ödeme Başarısız*\n\nFatura: *${bill.name}*\nMiktar: *${bill.amount} ${bill.asset}*\nHata: ${classified.message}`
+            ).catch(() => {});
+          }
         }
         continue; // skip post-payment steps
       }
@@ -217,8 +233,9 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
 
       // ── Phase 5: Telegram success notification ─────────────────────────────
       if (sendTelegramNotification) {
-        const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
-        const msg = `✅ *Payment Successful*\n\n${typeLabel}: *${bill.name}*\nAmount: *${bill.amount} ${bill.asset}*\nTx: [View on Explorer](https://stellar.expert/explorer/testnet/tx/${result.hash})`;
+        const typeLabel = bill.type === 'one-time' ? 'Tek seferlik ödeme' : 'Tekrarlayan fatura';
+        const paidAt = new Date().toLocaleString('tr-TR');
+        const msg = `✅ *Ödeme Başarılı*\n\n${typeLabel}: *${bill.name}*\nÖdenen Miktar: *${bill.amount} ${bill.asset}*\nAlıcı: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\`\nTarih: ${paidAt}\n\n[Stellar Explorer'da Görüntüle](https://stellar.expert/explorer/testnet/tx/${result.hash})`;
         sendTelegramNotification(msg).catch(() => {});
       }
     }
@@ -227,7 +244,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     } finally {
       processingRef.current = false;
     }
-  }, [publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, sendTelegramNotification, walletSignAndSubmit, walletSignFn]);
+  }, [publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn]);
 
   // Keep a stable ref so the interval always calls the latest processPayments
   // without the effect itself re-running every time `bills` changes.
