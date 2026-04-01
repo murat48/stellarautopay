@@ -30,3 +30,5 @@ contracts/autopay/target/
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local
