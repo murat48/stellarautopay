@@ -299,11 +299,10 @@ To download as Excel: open in Google Sheets → **File → Download → Microsof
 Based on ongoing user feedback patterns:
 
 1. **Mainnet support** — Add a testnet / mainnet toggle with appropriate risk warnings
-2. **USDC recurring auto-pay** — Currently USDC bills require manual signing; fix trustline detection
-3. **Offline notifications via Service Worker** — Send alerts even when the browser tab is closed
-4. **Bill categories & tags** — Tag bills (rent, utilities, subscriptions) and filter by category
-5. **CSV / Excel payment history export** — Let users download on-chain history for accounting
-6. **Mobile layout** — Optimize for mobile browsers; Freighter mobile support
+2. **Offline notifications via Service Worker** — Send alerts even when the browser tab is closed
+3. **Bill categories & tags** — Tag bills (rent, utilities, subscriptions) and filter by category
+4. **CSV / Excel payment history export** — Let users download on-chain history for accounting
+5. **Mobile layout** — Optimize for mobile browsers; Freighter mobile support
 
 ---
 
