@@ -32,14 +32,27 @@ function formatDate(iso) {
 
 export default function BillDashboard({ bills, addBill, pauseBill, deleteBill }) {
   const [showForm, setShowForm] = useState(false);
-  const [filter, setFilter] = useState('all'); // all, recurring, one-time, completed
+  const [filter, setFilter] = useState('unpaid'); // unpaid, recurring, one-time, completed, all
 
-  const filteredBills = bills.filter((bill) => {
-    if (filter === 'recurring') return bill.type !== 'one-time' && bill.status !== 'completed' && bill.status !== 'paid';
-    if (filter === 'one-time') return bill.type === 'one-time' && bill.status !== 'completed' && bill.status !== 'paid';
-    if (filter === 'completed') return bill.status === 'completed' || bill.status === 'paid';
-    return true;
-  });
+  const isUnpaid = (bill) => bill.status !== 'completed' && bill.status !== 'paid';
+
+  const filteredBills = bills
+    .filter((bill) => {
+      if (filter === 'unpaid')    return isUnpaid(bill);
+      if (filter === 'recurring') return bill.type !== 'one-time' && isUnpaid(bill);
+      if (filter === 'one-time')  return bill.type === 'one-time' && isUnpaid(bill);
+      if (filter === 'completed') return bill.status === 'completed' || bill.status === 'paid';
+      return true; // all
+    })
+    .sort((a, b) => {
+      // unpaid views: sort by nextDueDate ascending (soonest first)
+      if (filter !== 'completed' && filter !== 'all') {
+        const aDate = a.nextDueDate ? new Date(a.nextDueDate).getTime() : Infinity;
+        const bDate = b.nextDueDate ? new Date(b.nextDueDate).getTime() : Infinity;
+        return aDate - bDate;
+      }
+      return 0;
+    });
 
   return (
     <div className="bill-dashboard">
@@ -47,13 +60,13 @@ export default function BillDashboard({ bills, addBill, pauseBill, deleteBill })
         <h2>Payments</h2>
         <div className="section-header-actions">
           <div className="filter-tabs">
-            {['all', 'recurring', 'one-time', 'completed'].map((f) => (
+            {['unpaid', 'recurring', 'one-time', 'completed', 'all'].map((f) => (
               <button
                 key={f}
                 className={`filter-tab ${filter === f ? 'active' : ''}`}
                 onClick={() => setFilter(f)}
               >
-                {f === 'all' ? 'All' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'unpaid' ? 'Unpaid' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -65,7 +78,7 @@ export default function BillDashboard({ bills, addBill, pauseBill, deleteBill })
 
       {filteredBills.length === 0 ? (
         <div className="empty-state">
-          <p>{filter === 'all' ? 'No payments yet. Add your first payment to get started.' : `No ${filter} payments.`}</p>
+          <p>{filter === 'unpaid' ? 'No unpaid payments.' : filter === 'all' ? 'No payments yet. Add your first payment to get started.' : `No ${filter} payments.`}</p>
         </div>
       ) : (
         <div className="bill-grid">

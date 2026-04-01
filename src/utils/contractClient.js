@@ -15,7 +15,7 @@ import {
   Address,
 } from '@stellar/stellar-sdk';
 
-export const CONTRACT_ID = 'CC7XBIWVBKEAKUMADCPRDC5O2WAI6D2WK5KJS4CTEKQ2ZS3TEHXYHSY5';
+export const CONTRACT_ID = 'CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 
