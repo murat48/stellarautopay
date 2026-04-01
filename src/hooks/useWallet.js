@@ -45,7 +45,7 @@ export default function useWallet() {
     ensureKit();
   }, []);
 
-  // Step 1: Connect wallet via modal (no secret key needed)
+  // Step 1: Connect wallet via modal, then immediately enable auto-pay
   const connect = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -55,6 +55,47 @@ export default function useWallet() {
       const bal = await fetchBalances(address);
       setPublicKey(address);
       setBalances(bal);
+
+      // Auto-enable auto-pay right after wallet connection
+      setAutoPayLoading(true);
+      try {
+        const sessionKp = Keypair.random();
+        const sessionPub = sessionKp.publicKey();
+
+        const tryEnable = async () => {
+          const xdr = await buildAddSignerTx(address, sessionPub);
+          const signResult = await StellarWalletsKit.signTransaction(xdr, {
+            networkPassphrase: NETWORK_PASSPHRASE,
+            address,
+          });
+          const signedTxXdr = typeof signResult === 'string' ? signResult : signResult?.signedTxXdr;
+          if (!signedTxXdr) throw new Error('Wallet did not return a signed transaction.');
+          return submitTx(signedTxXdr);
+        };
+
+        try {
+          await tryEnable();
+        } catch (firstErr) {
+          const codes = firstErr?.stellarResultCodes;
+          if (codes?.transaction === 'tx_bad_seq') {
+            console.warn('Auto-pay: tx_bad_seq — rebuilding and retrying...');
+            await tryEnable();
+          } else {
+            throw firstErr;
+          }
+        }
+
+        sessionKeypairRef.current = sessionKp;
+        setAutoPayEnabled(true);
+      } catch (apErr) {
+        const msg = apErr?.message || String(apErr);
+        if (!msg.includes('cancel') && !msg.includes('dismiss') && !msg.includes('User declined') && !msg.includes('rejected')) {
+          setError('Auto-pay setup failed: ' + msg);
+        }
+        // If user cancelled auto-pay setup, stay connected but auto-pay stays off
+      } finally {
+        setAutoPayLoading(false);
+      }
     } catch (e) {
       const msg = e?.message || String(e);
       if (msg.includes('cancel') || msg.includes('dismiss')) {
