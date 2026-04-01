@@ -168,7 +168,7 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
   }
 
   // ── Update bill (auto-pay engine) ────────────────────────────────────────
-  const updateBill = useCallback(async (id, updates) => {
+  const updateBill = useCallback(async (id, updates, externalSignFn = null) => {
     const bill = bills.find((b) => b.id === id);
     if (!bill || !publicKey) return;
 
@@ -177,8 +177,8 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
       prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
     );
 
-    const signFn = getSessionOnlySignFn();
-    if (!signFn) return; // no session key → skip (engine handles recurring naturally)
+    const signFn = externalSignFn ?? getSessionOnlySignFn();
+    if (!signFn) return; // no sign fn available → skip contract write
 
     // Best-effort retry for contract write (3 attempts, 2s apart)
     const tryWrite = async (writeFn) => {
@@ -204,7 +204,7 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
 
   // ── Complete one-time bill ────────────────────────────────────────────────
   // Session key only — never opens wallet kit popup.
-  const completeBill = useCallback(async (id) => {
+  const completeBill = useCallback(async (id, externalSignFn = null) => {
     const bill = bills.find((b) => b.id === id);
     if (!bill || !publicKey) return;
 
@@ -216,7 +216,7 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
       prev.map((b) => (b.id === id ? { ...b, status: 'completed' } : b))
     );
 
-    const signFn = getSessionOnlySignFn();
+    const signFn = externalSignFn ?? getSessionOnlySignFn();
     if (!signFn) return; // guard saved, contract will catch up on next session with auto-pay
 
     try {
@@ -230,7 +230,7 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
   // The Stellar payment has ALREADY been sent to Horizon before this is called.
   // NEVER throw, NEVER revert UI, NEVER open wallet-kit popup.
   // Uses session key only; saves to paid-keys guard as permanent fallback.
-  const markBillPaid = useCallback(async (id) => {
+  const markBillPaid = useCallback(async (id, externalSignFn = null) => {
     const bill = bills.find((b) => b.id === id);
     if (!bill || !publicKey) return;
 
@@ -242,8 +242,8 @@ export default function useBills(publicKey, signTransaction, getSessionKeypair) 
       prev.map((b) => (b.id === id ? { ...b, status: 'paid' } : b))
     );
 
-    // Session key only — never open wallet-kit for this (avoid surprise popup after payment)
-    const signFn = getSessionOnlySignFn();
+    // Use provided sign fn (session or wallet) → ensures on-chain write in both modes
+    const signFn = externalSignFn ?? getSessionOnlySignFn();
     if (!signFn) return; // paid-keys guard is active; safe without contract write
 
     // Best-effort retry (3 attempts, 2s apart)

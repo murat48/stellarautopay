@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { sendPayment, buildPaymentTxXdr, classifyError } from '../utils/stellar';
-import { makeSessionSignFn } from '../utils/contractClient';
+import { makeSessionSignFn, makeWalletSignFn } from '../utils/contractClient';
 import { loadPaidKeys } from './useBills';
 
 // ── Smart month-aware date calculation ────────────────────────────────────
@@ -95,12 +95,15 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     if (!isAutoMode && !isManualMode) return;
     processingRef.current = true;
 
-    // Sign function for contract record_payment calls.
-    // In manual mode we deliberately use null so record_payment is local-only
-    // (no extra Freighter popup — addEntry still does optimistic UI update).
-    const recordSignFn = isAutoMode && sessionKp
+    // Single sign function for ALL post-payment contract writes:
+    // record_payment, mark_paid, update_next_due.
+    // Auto mode: session keypair signs silently — no popup.
+    // Manual mode: wallet sign fn (Freighter opens once per contract write).
+    const contractSignFn = sessionKp
       ? makeSessionSignFn(sessionKp)
-      : null;
+      : walletSignFn && publicKey
+        ? makeWalletSignFn(walletSignFn, publicKey)
+        : null;
 
     const now = new Date();
 
@@ -182,7 +185,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
             recipientAddress: bill.recipientAddress,
             amount: bill.amount, asset: bill.asset,
             txHash: '', status: 'skipped', error: classified.message,
-          }, publicKey, recordSignFn).catch(() => {});
+          }, publicKey, contractSignFn).catch(() => {});
           if (sendTelegramNotification) {
             const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
             sendTelegramNotification(
@@ -195,7 +198,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
             recipientAddress: bill.recipientAddress,
             amount: bill.amount, asset: bill.asset,
             txHash: '', status: 'failed', error: classified.message,
-          }, publicKey, recordSignFn).catch(() => {});
+          }, publicKey, contractSignFn).catch(() => {});
           if (sendTelegramNotification) {
             sendTelegramNotification(
               `❌ *Ödeme Başarısız*\n\nFatura: *${bill.name}*\nMiktar: *${bill.amount} ${bill.asset}*\nHata: ${classified.message}`
@@ -219,16 +222,16 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
         recipientAddress: bill.recipientAddress,
         amount: bill.amount, asset: bill.asset,
         txHash: result.hash, status: 'success', error: '',
-      }, publicKey, recordSignFn).catch(() => {});
+      }, publicKey, contractSignFn).catch(() => {});
 
       // ── Phase 4: Update contract state (best-effort, non-blocking) ─────────
-      // markBillPaid and updateBill handle their own retries internally.
+      // Pass contractSignFn so the write works in both auto and manual mode.
       if (bill.type === 'one-time') {
-        markBillPaid(bill.id).catch(() => {});
+        markBillPaid(bill.id, contractSignFn).catch((e) => console.warn('mark_paid failed:', e?.message));
       } else {
         updateBill(bill.id, {
           nextDueDate: calculateNextDueDate(bill.nextDueDate, bill.frequency, bill.dayOfMonth ?? 0),
-        }).catch(() => {});
+        }, contractSignFn).catch((e) => console.warn('update_next_due failed:', e?.message));
       }
 
       // ── Phase 5: Telegram success notification ─────────────────────────────
