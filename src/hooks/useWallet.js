@@ -79,27 +79,40 @@ export default function useWallet() {
       const sessionKp = Keypair.random();
       const sessionPub = sessionKp.publicKey();
 
-      // Build setOptions tx to add session key as signer
-      const xdr = await buildAddSignerTx(publicKey, sessionPub);
+      // Build setOptions tx — rebuild and retry once on tx_bad_seq
+      const tryEnable = async () => {
+        const xdr = await buildAddSignerTx(publicKey, sessionPub);
 
-      // User signs via wallet kit (Freighter popup etc.) — ONE time
-      const signResult = await StellarWalletsKit.signTransaction(xdr, {
-        networkPassphrase: NETWORK_PASSPHRASE,
-        address: publicKey,
-      });
-      // Some kit versions return { signedTxXdr }, others return the string directly
-      const signedTxXdr = typeof signResult === 'string' ? signResult : signResult?.signedTxXdr;
-      if (!signedTxXdr) throw new Error('Wallet did not return a signed transaction.');
+        // User signs via wallet kit (Freighter popup etc.) — ONE time
+        const signResult = await StellarWalletsKit.signTransaction(xdr, {
+          networkPassphrase: NETWORK_PASSPHRASE,
+          address: publicKey,
+        });
+        const signedTxXdr = typeof signResult === 'string' ? signResult : signResult?.signedTxXdr;
+        if (!signedTxXdr) throw new Error('Wallet did not return a signed transaction.');
+        return submitTx(signedTxXdr);
+      };
 
-      // Submit the signed tx
-      await submitTx(signedTxXdr);
+      try {
+        await tryEnable();
+      } catch (firstErr) {
+        // tx_bad_seq means the account sequence changed between build and submit
+        // (e.g. another tx was sent in the meantime). Rebuild and retry once.
+        const codes = firstErr?.stellarResultCodes;
+        if (codes?.transaction === 'tx_bad_seq') {
+          console.warn('Auto-pay: tx_bad_seq — rebuilding and retrying...');
+          await tryEnable();
+        } else {
+          throw firstErr;
+        }
+      }
 
-      // Store session keypair in memory only
+      // Store session keypair in memory only — never in localStorage
       sessionKeypairRef.current = sessionKp;
       setAutoPayEnabled(true);
     } catch (e) {
       const msg = e?.message || String(e);
-      if (msg.includes('cancel') || msg.includes('dismiss') || msg.includes('User declined')) {
+      if (msg.includes('cancel') || msg.includes('dismiss') || msg.includes('User declined') || msg.includes('rejected')) {
         setError(null);
       } else {
         setError('Failed to enable auto-pay: ' + msg);

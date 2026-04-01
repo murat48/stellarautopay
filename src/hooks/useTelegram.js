@@ -57,7 +57,7 @@ export default function useTelegram() {
   const testConnection = useCallback(async () => {
     setTestStatus('sending');
     try {
-      await sendMessage('✅ *Stellar Autopay* bağlantısı başarılı!\n\nÖdeme bildirimleriniz bu sohbete gelecektir.');
+      await sendMessage('✅ *Stellar Autopay* connected successfully!\n\nYou will receive payment notifications here.');
       setTestStatus('success');
       setTimeout(() => setTestStatus(null), 3000);
     } catch (err) {

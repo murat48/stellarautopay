@@ -119,15 +119,15 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
           !notifiedRef.current.has(b.id + '_' + b.nextDueDate)
       );
       for (const bill of upcomingBills) {
-        const dueTime = new Date(bill.nextDueDate).toLocaleString('tr-TR');
-        const typeLabel = bill.type === 'one-time' ? 'Tek seferlik ödeme' : 'Tekrarlayan fatura';
+        const dueTime = new Date(bill.nextDueDate).toLocaleString('en-GB');
+        const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
         const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
         const hasSufficientBalance = currentBalance >= parseFloat(bill.amount);
 
-        let msg = `⏰ *Yaklaşan Ödeme*\n\n${typeLabel}: *${bill.name}*\nMiktar: *${bill.amount} ${bill.asset}*\nÖdeme Tarihi: ${dueTime}\nAlıcı: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
+        let msg = `⏰ *Upcoming Payment*\n\n${typeLabel}: *${bill.name}*\nAmount: *${bill.amount} ${bill.asset}*\nDue: ${dueTime}\nRecipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
 
         if (!hasSufficientBalance) {
-          msg += `\n\n⚠️ *YETERSİZ BAKİYE UYARISI*\nMevcut ${bill.asset} bakiyeniz: *${currentBalance.toFixed(7)} ${bill.asset}*\nGerekli: *${bill.amount} ${bill.asset}*\nÖdemenin gerçekleşmesi için lütfen bakiyenizi yükleyin.`;
+          msg += `\n\n⚠️ *INSUFFICIENT BALANCE WARNING*\nCurrent ${bill.asset} balance: *${currentBalance.toFixed(7)} ${bill.asset}*\nRequired: *${bill.amount} ${bill.asset}*\nPlease top up your wallet before the payment date.`;
         }
 
         try {
@@ -189,7 +189,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
           if (sendTelegramNotification) {
             const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
             sendTelegramNotification(
-              `⚠️ *Yetersiz Bakiye — Ödeme Atlandı*\n\nFatura: *${bill.name}*\nGerekli: *${bill.amount} ${bill.asset}*\nMevcut bakiye: *${currentBalance.toFixed(7)} ${bill.asset}*\n\nLütfen bakiyenizi yükleyin.`
+              `⚠️ *Insufficient Balance — Payment Skipped*\n\nBill: *${bill.name}*\nRequired: *${bill.amount} ${bill.asset}*\nCurrent balance: *${currentBalance.toFixed(7)} ${bill.asset}*\n\nPlease top up your wallet.`
             ).catch(() => {});
           }
         } else {
@@ -201,7 +201,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
           }, publicKey, contractSignFn).catch(() => {});
           if (sendTelegramNotification) {
             sendTelegramNotification(
-              `❌ *Ödeme Başarısız*\n\nFatura: *${bill.name}*\nMiktar: *${bill.amount} ${bill.asset}*\nHata: ${classified.message}`
+              `❌ *Payment Failed*\n\nBill: *${bill.name}*\nAmount: *${bill.amount} ${bill.asset}*\nError: ${classified.message}`
             ).catch(() => {});
           }
         }
@@ -236,9 +236,9 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
 
       // ── Phase 5: Telegram success notification ─────────────────────────────
       if (sendTelegramNotification) {
-        const typeLabel = bill.type === 'one-time' ? 'Tek seferlik ödeme' : 'Tekrarlayan fatura';
-        const paidAt = new Date().toLocaleString('tr-TR');
-        const msg = `✅ *Ödeme Başarılı*\n\n${typeLabel}: *${bill.name}*\nÖdenen Miktar: *${bill.amount} ${bill.asset}*\nAlıcı: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\`\nTarih: ${paidAt}\n\n[Stellar Explorer'da Görüntüle](https://stellar.expert/explorer/testnet/tx/${result.hash})`;
+        const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
+        const paidAt = new Date().toLocaleString('en-GB');
+        const msg = `✅ *Payment Successful*\n\n${typeLabel}: *${bill.name}*\nAmount Paid: *${bill.amount} ${bill.asset}*\nRecipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\`\nDate: ${paidAt}\n\n[View on Stellar Explorer](https://stellar.expert/explorer/testnet/tx/${result.hash})`;
         sendTelegramNotification(msg).catch(() => {});
       }
     }

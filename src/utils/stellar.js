@@ -66,10 +66,25 @@ export async function buildRemoveSignerTx(ownerPublicKey, sessionPublicKey) {
   return tx.toXDR();
 }
 
-// Submit a signed XDR string
+// Submit a signed XDR string — extracts Horizon error codes from 400 responses
 export async function submitTx(signedXdr) {
   const tx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-  return server.submitTransaction(tx);
+  try {
+    return await server.submitTransaction(tx);
+  } catch (err) {
+    // Extract Stellar-specific error from Horizon 400 response
+    const resultCodes = err?.response?.data?.extras?.result_codes;
+    if (resultCodes) {
+      const txCode  = resultCodes.transaction || '';
+      const opCodes = resultCodes.operations  || [];
+      const detail  = [txCode, ...opCodes].filter(Boolean).join(', ');
+      const enhanced = new Error(`Transaction failed: ${detail}`);
+      enhanced.stellarResultCodes = resultCodes;
+      enhanced.originalError = err;
+      throw enhanced;
+    }
+    throw err;
+  }
 }
 
 // Build an unsigned payment tx and return XDR — for manual wallet signing
