@@ -9,7 +9,7 @@ export default function MetricsStrip({ bills, history }) {
   const activeBills = bills.filter((b) => b.status === 'active');
   const recurringBills = activeBills.filter((b) => b.type !== 'one-time');
   const oneTimeBills = activeBills.filter((b) => b.type === 'one-time');
-  const completedBills = bills.filter((b) => b.status === 'completed').length;
+  const completedBills = bills.filter((b) => b.status === 'completed' || b.status === 'paid').length;
 
   const pendingBills = activeBills.filter(
     (b) => new Date(b.nextDueDate) > now

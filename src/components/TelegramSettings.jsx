@@ -26,26 +26,47 @@ export default function TelegramSettings({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>📨 Telegram Bildirimleri</h2>
+          <h2>📨 Telegram Notifications</h2>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="telegram-setup-info">
-          <p><strong>Nasıl Kurulur?</strong></p>
-          <ol>
-            <li>Telegram'da <strong>@StellarAutopayBot</strong> adresine gidin ve <strong>Start</strong> tuşuna basın.</li>
-            <li>Bota herhangi bir mesaj gönderin (örn. <code>/start</code>).</li>
-            <li>Aşağıdaki linki tarayıcınızda açın ve <code>id</code> alanındaki numarayı kopyalayın:<br/>
-              <code>https://api.telegram.org/bot8713519999:AAE7lqqUVZmSMM3hU_0pCGg4aawp5JF6cSU/getUpdates</code>
-            </li>
-            <li>Kopyaladığınız numarayı aşağıdaki <strong>Chat ID</strong> alanına yapıştırın.</li>
-          </ol>
+          <div className="telegram-setup-columns">
+            <div className="telegram-setup-steps">
+              <p><strong>How to Set Up?</strong></p>
+              <ol>
+                <li>Scan the QR code or search <strong>@StellarAutopay_Bot</strong> on Telegram and press <strong>Start</strong>.</li>
+                <li>Send any message to the bot (e.g. <code>/start</code>).</li>
+                <li>Open the link below in your browser and copy the number from the <code>id</code> field:<br/>
+                  <a
+                    href="https://api.telegram.org/bot8713519999:AAE7lqqUVZmSMM3hU_0pCGg4aawp5JF6cSU/getUpdates"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="telegram-get-updates-link"
+                  >
+                    getUpdates →
+                  </a>
+                </li>
+                <li>Paste the number into the <strong>Chat ID</strong> field below and click <strong>Test</strong>.</li>
+              </ol>
+            </div>
+            <div className="telegram-qr-wrap">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://t.me/StellarAutopay_Bot&margin=6"
+                alt="@StellarAutopay_Bot QR"
+                className="telegram-qr"
+                width={130}
+                height={130}
+              />
+              <span className="telegram-qr-label">@StellarAutopay_Bot</span>
+            </div>
+          </div>
         </div>
 
         <div className="form-group">
           <label>Chat ID</label>
           <input
-            placeholder="örn. 123456789"
+            placeholder="e.g. 123456789"
             value={chatId}
             onChange={(e) => setChatId(e.target.value)}
           />
@@ -53,8 +74,8 @@ export default function TelegramSettings({
 
         {testStatus && (
           <div className={`test-status ${testStatus === 'success' ? 'test-success' : testStatus === 'sending' ? 'test-sending' : 'test-error'}`}>
-            {testStatus === 'sending' && '⏳ Test mesajı gönderiliyor...'}
-            {testStatus === 'success' && '✅ Test mesajı gönderildi! Telegram\'ınızı kontrol edin.'}
+            {testStatus === 'sending' && '⏳ Sending test message...'}
+            {testStatus === 'success' && '✅ Test message sent! Check your Telegram.'}
             {testStatus.startsWith('error') && `❌ ${testStatus}`}
           </div>
         )}
@@ -62,19 +83,19 @@ export default function TelegramSettings({
         <div className="telegram-actions">
           <button
             className="btn-secondary"
-            onClick={onTest}
+            onClick={() => onTest(chatId.trim())}
             disabled={!chatId.trim() || testStatus === 'sending'}
           >
-            🧪 Bağlantıyı Test Et
+            🧪 Test Connection
           </button>
           <button className="btn-primary" onClick={handleSave}>
-            💾 Kaydet &amp; Etkinleştir
+            💾 Save &amp; Enable
           </button>
         </div>
 
         {config.enabled && (
           <button className="btn-danger telegram-disable-btn" onClick={handleDisable}>
-            Bildirimleri Devre Dışı Bırak
+            Disable Notifications
           </button>
         )}
       </div>
