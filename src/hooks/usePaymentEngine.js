@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { sendPayment, buildPaymentTxXdr, classifyError } from '../utils/stellar';
-import { makeSessionSignFn, makeWalletSignFn } from '../utils/contractClient';
+import { makeSessionSignFn } from '../utils/contractClient';
 import { loadPaidKeys } from './useBills';
 
 // ── Smart month-aware date calculation ────────────────────────────────────
@@ -95,15 +95,12 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     if (!isAutoMode && !isManualMode) return;
     processingRef.current = true;
 
-    // Single sign function for ALL post-payment contract writes:
-    // record_payment, mark_paid, update_next_due.
-    // Auto mode: session keypair signs silently — no popup.
-    // Manual mode: wallet sign fn (Freighter opens once per contract write).
-    const contractSignFn = sessionKp
-      ? makeSessionSignFn(sessionKp)
-      : walletSignFn && publicKey
-        ? makeWalletSignFn(walletSignFn, publicKey)
-        : null;
+    // Sign function for post-payment contract writes (record_payment, mark_paid, update_next_due).
+    // Auto mode:   session keypair signs silently — zero popups.
+    // Manual mode: null — contract writes are skipped; optimistic UI + paid-keys guard
+    //              prevents double-payment and keeps local state correct. Avoids
+    //              flooding the user with extra Freighter popups after the payment.
+    const contractSignFn = sessionKp ? makeSessionSignFn(sessionKp) : null;
 
     const now = new Date();
 

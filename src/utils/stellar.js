@@ -45,7 +45,8 @@ export async function buildAddSignerTx(ownerPublicKey, sessionPublicKey) {
   );
 
   const builder = new TransactionBuilder(account, {
-    fee: String(10000 + orphaned.length * 10000), // extra fee per cleanup op
+    // 1000 stroops per op is sufficient for setOptions (classic tx)
+    fee: String(1000 * (orphaned.length + 1)),
     networkPassphrase: NETWORK_PASSPHRASE,
   });
 
@@ -72,7 +73,7 @@ export async function buildAddSignerTx(ownerPublicKey, sessionPublicKey) {
 export async function buildRemoveSignerTx(ownerPublicKey, sessionPublicKey) {
   const account = await server.loadAccount(ownerPublicKey);
   const tx = new TransactionBuilder(account, {
-    fee: '10000',
+    fee: '1000',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(
@@ -112,7 +113,7 @@ export async function buildPaymentTxXdr(sourcePublicKey, destination, amount, as
   const asset = assetCode === 'XLM' ? Asset.native() : USDC_ASSET;
 
   const tx = new TransactionBuilder(account, {
-    fee: '10000',
+    fee: '1000',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(
@@ -134,7 +135,7 @@ export async function sendPayment(sessionKeypair, sourcePublicKey, destination, 
   const asset = assetCode === 'XLM' ? Asset.native() : USDC_ASSET;
 
   const transaction = new TransactionBuilder(account, {
-    fee: '10000',
+    fee: '1000',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(
