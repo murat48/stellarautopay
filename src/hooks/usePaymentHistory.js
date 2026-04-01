@@ -40,11 +40,21 @@ export default function usePaymentHistory() {
     };
     setHistory((prev) => [localEntry, ...prev]);
 
-    // Write to contract in background (non-blocking for payment engine)
+    // Write to contract — retry up to 3x with backoff to handle
+    // sequence-number races that occur right after a payment tx.
     if (publicKey && signFn) {
-      recordPayment(publicKey, signFn, entry).catch((err) => {
-        console.warn('Could not record payment on contract:', err.message);
-      });
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await recordPayment(publicKey, signFn, entry);
+          break;
+        } catch (err) {
+          if (attempt < 3) {
+            await new Promise((r) => setTimeout(r, 2000 * attempt));
+            continue;
+          }
+          console.warn('Could not record payment on contract:', err.message);
+        }
+      }
     }
   }, []);
 

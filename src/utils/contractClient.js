@@ -37,9 +37,9 @@ function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 async function buildTx(publicKey, method, ...args) {
   const account = await server.getAccount(publicKey);
   return new TransactionBuilder(account, {
-    // Soroban max fee cap: rpc.assembleTransaction will set the actual fee
-    // from simulation. 300000 stroops (0.03 XLM) covers all contract ops.
-    fee: '300000',
+    // rpc.assembleTransaction ADDS simulation.minResourceFee on top of this base.
+    // Keeping base at 1000 stroops keeps total fees minimal (≈ 0.01 XLM).
+    fee: '1000',
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call(method, ...args))

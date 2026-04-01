@@ -1,7 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { sendPayment, buildPaymentTxXdr, classifyError } from '../utils/stellar';
-import { makeSessionSignFn } from '../utils/contractClient';
+import { makeSessionSignFn, makeWalletSignFn } from '../utils/contractClient';
 import { loadPaidKeys } from './useBills';
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ── Smart month-aware date calculation ────────────────────────────────────
 
@@ -97,10 +99,13 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
 
     // Sign function for post-payment contract writes (record_payment, mark_paid, update_next_due).
     // Auto mode:   session keypair signs silently — zero popups.
-    // Manual mode: null — contract writes are skipped; optimistic UI + paid-keys guard
-    //              prevents double-payment and keeps local state correct. Avoids
-    //              flooding the user with extra Freighter popups after the payment.
-    const contractSignFn = sessionKp ? makeSessionSignFn(sessionKp) : null;
+    // Manual mode: wallet sign fn — popups appear immediately after the payment popup
+    //              (no 60-second wait). All contract state is properly updated on-chain.
+    const contractSignFn = sessionKp
+      ? makeSessionSignFn(sessionKp)
+      : walletSignFn
+      ? makeWalletSignFn(walletSignFn, publicKey)
+      : null;
 
     const now = new Date();
 
@@ -212,17 +217,22 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
       // ── Phase 2b: Refresh balance so user sees the deduction immediately ─────
       if (refreshBalance) refreshBalance().catch(() => {});
 
-      // ── Phase 3: Record in history (best-effort, non-blocking) ─────────────
-      console.log(`✅ Payment recorded | bill: ${bill.name} | hash: ${result.hash}`);
-      addEntry({
+      // ── Phase 3: Record in history ─────────────────────────────────────────
+      // Wait 1.5 s so the Soroban RPC node syncs the account sequence that
+      // the just-submitted payment transaction just incremented.
+      // addEntry retries on tx_bad_seq internally (up to 3×).
+      console.log(`✅ Payment success | bill: ${bill.name} | hash: ${result.hash}`);
+      await sleep(1500);
+      await addEntry({
         billName: bill.name, billId: bill.id,
         recipientAddress: bill.recipientAddress,
         amount: bill.amount, asset: bill.asset,
         txHash: result.hash, status: 'success', error: '',
-      }, publicKey, contractSignFn).catch(() => {});
+      }, publicKey, contractSignFn);
 
-      // ── Phase 4: Update contract state (best-effort, non-blocking) ─────────
-      // Pass contractSignFn so the write works in both auto and manual mode.
+      // ── Phase 4: Update contract state ─────────────────────────────────────
+      // Runs AFTER Phase 3 completes so sequence numbers don't conflict.
+      // markBillPaid / updateBill have their own 3-attempt retry internally.
       if (bill.type === 'one-time') {
         markBillPaid(bill.id, contractSignFn).catch((e) => console.warn('mark_paid failed:', e?.message));
       } else {
@@ -263,7 +273,8 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     // but changing `bills` alone does NOT restart the interval.
     const run = () => processPaymentsRef.current();
     run();
-    const interval = setInterval(run, 60_000);
+    // 15 s polling → worst-case payment latency ~15 s (was 60 s)
+    const interval = setInterval(run, 15_000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicKey, autoPayEnabled, contractReady, walletSignAndSubmit]);
