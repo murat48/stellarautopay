@@ -32,21 +32,40 @@ export async function fetchBalances(publicKey) {
   return balances;
 }
 
-// Build a setOptions tx to add a session signer (returns XDR for wallet signing)
+// Build a setOptions tx to add a session signer.
+// Also removes any orphaned non-master signers left over from previous sessions
+// in the same transaction — prevents op_too_many_signers errors.
 export async function buildAddSignerTx(ownerPublicKey, sessionPublicKey) {
   const account = await server.loadAccount(ownerPublicKey);
-  const tx = new TransactionBuilder(account, {
-    fee: '10000',
+
+  // Collect all non-master signers that aren't the new session key
+  // (these are orphaned keys from sessions that didn't clean up)
+  const orphaned = account.signers.filter(
+    (s) => s.key !== ownerPublicKey && s.key !== sessionPublicKey
+  );
+
+  const builder = new TransactionBuilder(account, {
+    fee: String(10000 + orphaned.length * 10000), // extra fee per cleanup op
     networkPassphrase: NETWORK_PASSPHRASE,
-  })
-    .addOperation(
+  });
+
+  // Remove every orphaned signer first (weight 0 = remove)
+  for (const orphan of orphaned) {
+    builder.addOperation(
       Operation.setOptions({
-        signer: { ed25519PublicKey: sessionPublicKey, weight: 1 },
+        signer: { ed25519PublicKey: orphan.key, weight: 0 },
       })
-    )
-    .setTimeout(60)
-    .build();
-  return tx.toXDR();
+    );
+  }
+
+  // Add the new session signer
+  builder.addOperation(
+    Operation.setOptions({
+      signer: { ed25519PublicKey: sessionPublicKey, weight: 1 },
+    })
+  );
+
+  return builder.setTimeout(120).build().toXDR();
 }
 
 // Build a setOptions tx to remove a session signer (returns XDR for wallet signing)
@@ -61,7 +80,7 @@ export async function buildRemoveSignerTx(ownerPublicKey, sessionPublicKey) {
         signer: { ed25519PublicKey: sessionPublicKey, weight: 0 },
       })
     )
-    .setTimeout(60)
+    .setTimeout(120)
     .build();
   return tx.toXDR();
 }
