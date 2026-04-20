@@ -15,6 +15,7 @@
 | **GitHub**         | [https://github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                          |
 | **Network**        | Stellar Testnet                                                                                                                                                                 |
 | **Telegram Bot**   | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot)                                                                                                                          |
+| **Uptime Monitor** | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                                   |
 
 ---
 
@@ -399,7 +400,7 @@ stellarautopay/
 | Security checklist | ✅ | [Security Model](#-security-model) |
 | Metrics dashboard | ✅ | Built-in MetricsStrip in app |
 | 30+ user wallet addresses | ⏳ | Collecting via Google Form |
-| Monitoring dashboard | ⏳ | UptimeRobot setup pending |
+| Monitoring dashboard | ✅ | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl) |
 | Community contribution (Twitter/X post) | ⏳ | Post pending |
 | Google Form for user onboarding | ✅ | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform) |
 | Exported user responses (Excel/Sheets) | ✅ | [View Responses](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
