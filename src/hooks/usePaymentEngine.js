@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { sendPayment, buildPaymentTxXdr, classifyError } from '../utils/stellar';
 import { makeSessionSignFn, makeWalletSignFn } from '../utils/contractClient';
 import { loadPaidKeys } from './useBills';
+import { logger } from '../utils/logger';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -80,7 +81,7 @@ function isPaymentDue(bill, now) {
   return now >= new Date(due.getTime() - 30_000); // 30s jitter only
 }
 
-export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn) {
+export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn, pendingProposals = [], executeProposalAndPay = null) {
   const processingRef = useRef(false);
   const notifiedRef = useRef(new Set());
   // Track bills already paid in this session to prevent double-payment on re-render / stale state
@@ -110,33 +111,65 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     const now = new Date();
 
     try {
-    // --- Telegram: notify upcoming payments (1 day before) ---
+    // --- Telegram: multi-threshold upcoming payment notifications ---
     if (sendTelegramNotification) {
-      const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const upcomingBills = bills.filter(
-        (b) =>
-          b.status === 'active' &&
-          !isPaymentDue(b, now) &&
-          new Date(b.nextDueDate) <= oneDayFromNow &&
-          !notifiedRef.current.has(b.id + '_' + b.nextDueDate)
-      );
-      for (const bill of upcomingBills) {
-        const dueTime = new Date(bill.nextDueDate).toLocaleString('en-GB');
-        const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
+      // Milestones: 1h, 30min, 10min, 5min — each fires once per due-date cycle
+      const THRESHOLDS = [
+        { ms: 60 * 60 * 1000, label: '1 hour'    },
+        { ms: 30 * 60 * 1000, label: '30 minutes' },
+        { ms: 10 * 60 * 1000, label: '10 minutes' },
+        { ms:  5 * 60 * 1000, label: '5 minutes'  },
+      ];
+
+      for (const bill of bills.filter((b) => b.status === 'active' && !isPaymentDue(b, now))) {
+        const msUntilDue = new Date(bill.nextDueDate).getTime() - now.getTime();
         const currentBalance = balances ? (balances[bill.asset] ?? 0) : 0;
         const hasSufficientBalance = currentBalance >= parseFloat(bill.amount);
+        const proposal = pendingProposals.find(
+          (p) => p.status === 'pending' && String(p.billId) === String(bill.contractId)
+        );
 
-        let msg = `⏰ *Upcoming Payment*\n\n${typeLabel}: *${bill.name}*\nAmount: *${bill.amount} ${bill.asset}*\nDue: ${dueTime}\nRecipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
+        for (const { ms, label } of THRESHOLDS) {
+          // Fire within a 15 s window around each threshold
+          if (msUntilDue > ms - 15_000 && msUntilDue <= ms + 15_000) {
+            const notifyKey = `${bill.id}_${bill.nextDueDate}_${label}`;
+            if (notifiedRef.current.has(notifyKey)) continue;
+            notifiedRef.current.add(notifyKey);
 
-        if (!hasSufficientBalance) {
-          msg += `\n\n⚠️ *INSUFFICIENT BALANCE WARNING*\nCurrent ${bill.asset} balance: *${currentBalance.toFixed(7)} ${bill.asset}*\nRequired: *${bill.amount} ${bill.asset}*\nPlease top up your wallet before the payment date.`;
-        }
+            const dueTime = new Date(bill.nextDueDate).toLocaleString('en-GB');
+            const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
 
-        try {
-          await sendTelegramNotification(msg);
-          notifiedRef.current.add(bill.id + '_' + bill.nextDueDate);
-        } catch {
-          // notification failure shouldn't block payments
+            let msg;
+            if (proposal) {
+              const approvalCount = (proposal.approvals || []).length;
+              const threshold = proposal.threshold ?? 1;
+              const thresholdMet = approvalCount >= threshold;
+              msg =
+                `🔐 *Multisig Payment Due in ${label}*\n\n` +
+                `${typeLabel}: *${bill.name}*\n` +
+                `Amount: *${bill.amount} ${bill.asset}*\n` +
+                `Due: ${dueTime}\n` +
+                `Approvals: *${approvalCount}/${threshold}*\n` +
+                (thresholdMet
+                  ? `✅ Threshold met — will execute automatically`
+                  : `⚠️ Threshold NOT met — waiting for co-signers`);
+            } else {
+              msg =
+                `⏰ *Payment Due in ${label}*\n\n` +
+                `${typeLabel}: *${bill.name}*\n` +
+                `Amount: *${bill.amount} ${bill.asset}*\n` +
+                `Due: ${dueTime}\n` +
+                `Recipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\``;
+              if (!hasSufficientBalance) {
+                msg +=
+                  `\n\n⚠️ *INSUFFICIENT BALANCE*\n` +
+                  `Current: *${currentBalance.toFixed(7)} ${bill.asset}*\n` +
+                  `Required: *${bill.amount} ${bill.asset}*`;
+              }
+            }
+
+            sendTelegramNotification(msg).catch((e) => logger.error('Telegram', e?.message));
+          }
         }
       }
     }
@@ -152,9 +185,49 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     const guardKeys = loadPaidKeys();
     guardKeys.forEach((k) => paidBillsRef.current.add(k));
 
-    const activeBills = bills.filter(
-      (b) => b.status === 'active' && isPaymentDue(b, now) && !paidBillsRef.current.has(paidKey(b))
+    // Bills that have ANY pending multisig proposal (regardless of threshold)
+    // are ALWAYS handled by the auto-execute block below, never by the normal path.
+    const billsWithProposal = new Set(
+      pendingProposals
+        .filter((p) => p.status === 'pending')
+        .map((p) => String(p.billId))
     );
+
+    const activeBills = bills.filter(
+      (b) =>
+        b.status === 'active' &&
+        isPaymentDue(b, now) &&
+        !paidBillsRef.current.has(paidKey(b)) &&
+        !billsWithProposal.has(String(b.contractId)) // exclude all multisig bills
+    );
+
+    // --- Auto-execute ready multisig proposals ---
+    // Threshold met + bill due → execute silently (no Freighter popup in auto mode)
+    if (typeof executeProposalAndPay === 'function') {
+      const readyProposals = pendingProposals.filter(
+        (p) =>
+          p.status === 'pending' &&
+          (p.approvals || []).length >= p.threshold
+      );
+      for (const proposal of readyProposals) {
+        const bill = bills.find(
+          (b) =>
+            b.status === 'active' &&
+            String(b.contractId) === String(proposal.billId) &&
+            isPaymentDue(b, now) &&
+            !paidBillsRef.current.has(paidKey(b))
+        );
+        if (!bill) continue;
+        // Guard against double-execution in same session
+        paidBillsRef.current.add(paidKey(bill));
+        try {
+          await executeProposalAndPay(proposal.proposer, proposal.id);
+        } catch (e) {
+          paidBillsRef.current.delete(paidKey(bill));
+          logger.warn('PaymentEngine', 'Auto-execute multisig failed:', e?.message);
+        }
+      }
+    }
 
     for (const bill of activeBills) {
       // ── Phase 1: Send the Stellar payment ─────────────────────────────────
@@ -221,7 +294,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
       // Wait 1.5 s so the Soroban RPC node syncs the account sequence that
       // the just-submitted payment transaction just incremented.
       // addEntry retries on tx_bad_seq internally (up to 3×).
-      console.log(`✅ Payment success | bill: ${bill.name} | hash: ${result.hash}`);
+      logger.info('PaymentEngine', `Payment success | bill: ${bill.name} | hash: ${result.hash}`);
       await sleep(1500);
       await addEntry({
         billName: bill.name, billId: bill.id,
@@ -234,11 +307,11 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
       // Runs AFTER Phase 3 completes so sequence numbers don't conflict.
       // markBillPaid / updateBill have their own 3-attempt retry internally.
       if (bill.type === 'one-time') {
-        markBillPaid(bill.id, contractSignFn).catch((e) => console.warn('mark_paid failed:', e?.message));
+        markBillPaid(bill.id, contractSignFn).catch((e) => logger.warn('PaymentEngine', 'mark_paid failed:', e?.message));
       } else {
         updateBill(bill.id, {
           nextDueDate: calculateNextDueDate(bill.nextDueDate, bill.frequency, bill.dayOfMonth ?? 0),
-        }, contractSignFn).catch((e) => console.warn('update_next_due failed:', e?.message));
+        }, contractSignFn).catch((e) => logger.warn('PaymentEngine', 'update_next_due failed:', e?.message));
       }
 
       // ── Phase 5: Telegram success notification ─────────────────────────────
@@ -246,7 +319,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
         const typeLabel = bill.type === 'one-time' ? 'One-time payment' : 'Recurring bill';
         const paidAt = new Date().toLocaleString('en-GB');
         const msg = `✅ *Payment Successful*\n\n${typeLabel}: *${bill.name}*\nAmount Paid: *${bill.amount} ${bill.asset}*\nRecipient: \`${bill.recipientAddress.slice(0, 8)}...${bill.recipientAddress.slice(-4)}\`\nDate: ${paidAt}\n\n[View on Stellar Explorer](https://stellar.expert/explorer/testnet/tx/${result.hash})`;
-        sendTelegramNotification(msg).catch(() => {});
+        sendTelegramNotification(msg).catch((e) => logger.error('Telegram', e?.message));
       }
     }
 
@@ -254,7 +327,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     } finally {
       processingRef.current = false;
     }
-  }, [publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn]);
+  }, [publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn, pendingProposals, executeProposalAndPay]);
 
   // Keep a stable ref so the interval always calls the latest processPayments
   // without the effect itself re-running every time `bills` changes.

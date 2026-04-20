@@ -60,6 +60,23 @@ export default function AddBillForm({ onAdd, onClose }) {
   });
   const [error, setError] = useState('');
 
+  // Multisig option
+  const [requireMultisig, setRequireMultisig] = useState(false);
+  const [approvers, setApprovers] = useState(['']);
+  const [threshold, setThreshold] = useState(1);
+
+  function handleApproverChange(index, value) {
+    setApprovers((prev) => prev.map((a, i) => (i === index ? value : a)));
+  }
+  function addApprover() { setApprovers((prev) => [...prev, '']); }
+  function removeApprover(index) {
+    setApprovers((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      setThreshold((t) => Math.min(t, Math.max(1, next.filter(Boolean).length)));
+      return next;
+    });
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => {
@@ -118,7 +135,16 @@ export default function AddBillForm({ onAdd, onClose }) {
       nextDueDate:      scheduledDateObj.toISOString(),
     };
 
-    onAdd(bill);
+    if (requireMultisig) {
+      const validApprovers = approvers.map((a) => a.trim()).filter(Boolean);
+      if (validApprovers.length === 0) return setError('Add at least one co-signer address.');
+      const validThreshold = parseInt(threshold, 10);
+      if (validThreshold < 1 || validThreshold > validApprovers.length)
+        return setError(`Threshold must be between 1 and ${validApprovers.length}.`);
+      onAdd(bill, { approvers: validApprovers, threshold: validThreshold });
+    } else {
+      onAdd(bill);
+    }
     onClose();
   };
 
@@ -259,6 +285,70 @@ export default function AddBillForm({ onAdd, onClose }) {
           </div>
 
           {error && <div className="error-msg">{error}</div>}
+
+          {/* Multi-sig toggle */}
+          <div className="form-group" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={requireMultisig}
+                onChange={(e) => setRequireMultisig(e.target.checked)}
+                style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+              />
+              <span>🔐 Require multi-sig approval before execution</span>
+            </label>
+            {requireMultisig && (
+              <div style={{ marginTop: '0.75rem', paddingLeft: '1.75rem' }}>
+                <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
+                  Co-signer Wallet Addresses
+                </label>
+                {approvers.map((approver, index) => (
+                  <div key={index} className="approver-row" style={{ marginBottom: '0.4rem' }}>
+                    <input
+                      type="text"
+                      className="form-input mono"
+                      placeholder="G... Stellar address"
+                      value={approver}
+                      onChange={(e) => handleApproverChange(index, e.target.value)}
+                      spellCheck={false}
+                    />
+                    {approvers.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn-danger btn-sm"
+                        onClick={() => removeApprover(index)}
+                        style={{ marginLeft: '0.4rem' }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" className="btn-secondary btn-sm" onClick={addApprover} style={{ marginTop: '0.25rem' }}>
+                  + Add Co-signer
+                </button>
+
+                <div className="form-row" style={{ marginTop: '0.75rem', alignItems: 'center' }}>
+                  <label className="form-label" style={{ whiteSpace: 'nowrap', marginBottom: 0, marginRight: '0.75rem' }}>
+                    Approvals required:
+                  </label>
+                  <select
+                    value={threshold}
+                    onChange={(e) => setThreshold(parseInt(e.target.value, 10))}
+                    className="form-input"
+                    style={{ width: 'auto' }}
+                  >
+                    {Array.from({ length: Math.max(1, approvers.filter(Boolean).length) }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>{n} of {Math.max(1, approvers.filter(Boolean).length)}</option>
+                    ))}
+                  </select>
+                </div>
+                <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '0.4rem' }}>
+                  Payment will only execute after {threshold} co-signer(s) approve it.
+                </p>
+              </div>
+            )}
+          </div>
 
           <button type="submit" className="btn-primary">
             {form.type === 'recurring' ? 'Add Recurring Bill' : 'Schedule Payment'}

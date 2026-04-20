@@ -1,4 +1,4 @@
-export default function MetricsStrip({ bills, history }) {
+export default function MetricsStrip({ bills, history, analytics }) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -54,6 +54,22 @@ export default function MetricsStrip({ bills, history }) {
         <span className="metric-value">{completedBills}</span>
         <span className="metric-label">Completed</span>
       </div>
+      {analytics && (
+        <>
+          <div className="metric-card">
+            <span className="metric-value">{analytics.activeDays}</span>
+            <span className="metric-label">Active Days</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-value">{analytics.retentionDays}d</span>
+            <span className="metric-label">Retention</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-value">{analytics.successRate}%</span>
+            <span className="metric-label">TX Success Rate</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

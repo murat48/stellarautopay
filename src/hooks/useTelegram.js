@@ -33,7 +33,14 @@ export default function useTelegram() {
   }, []);
 
   const sendMessage = useCallback(async (text) => {
-    if (!config.enabled || !config.chatId) return;
+    if (!config.enabled || !config.chatId) {
+      console.warn('[Telegram] sendMessage skipped — enabled:', config.enabled, 'chatId:', !!config.chatId);
+      return;
+    }
+    if (!BOT_TOKEN) {
+      console.error('[Telegram] VITE_TELEGRAM_BOT_TOKEN is not set in .env');
+      return;
+    }
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     const resp = await fetch(url, {
@@ -48,14 +55,17 @@ export default function useTelegram() {
 
     if (!resp.ok) {
       const data = await resp.json().catch(() => ({}));
-      throw new Error(data.description || 'Telegram API error');
+      const msg = data.description || `HTTP ${resp.status}`;
+      console.error('[Telegram] API error:', msg);
+      throw new Error(msg);
     }
 
     return resp.json();
   }, [config]);
 
-  // testConnection accepts an override chatId so the modal can test before saving
-  const testConnection = useCallback(async (overrideChatId) => {
+  // testConnection accepts an override chatId so the modal can test before saving.
+  // On success, automatically saves the chatId and enables notifications.
+  const testConnection = useCallback(async (overrideChatId, onAutoSave) => {
     const id = (overrideChatId || config.chatId || '').trim();
     if (!id) return;
     if (!BOT_TOKEN) {
@@ -79,6 +89,9 @@ export default function useTelegram() {
         const data = await resp.json().catch(() => ({}));
         throw new Error(data.description || `HTTP ${resp.status}`);
       }
+      // Auto-save and enable on successful test
+      setConfig((prev) => ({ ...prev, chatId: id, enabled: true }));
+      if (onAutoSave) onAutoSave(id);
       setTestStatus('success');
       setTimeout(() => setTestStatus(null), 3000);
     } catch (err) {

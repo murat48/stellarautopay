@@ -521,6 +521,26 @@
   color: var(--warning);
 }
 
+.badge-approved {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--success);
+}
+
+.badge-rejected {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--danger);
+}
+
+.badge-pending {
+  background: rgba(210, 153, 34, 0.15);
+  color: var(--warning);
+}
+
+.badge-executed {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+}
+
 .bill-badges {
   display: flex;
   gap: 0.35rem;

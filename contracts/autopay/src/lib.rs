@@ -79,15 +79,53 @@ pub struct Bill {
     pub created_at: u64,
 }
 
+/// Multisig proposal status
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum ProposalStatus {
+    Pending,
+    Approved,
+    Rejected,
+    Executed,
+}
+
+/// A multisig payment proposal
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct Proposal {
+    pub id: u64,
+    pub bill_id: u64,
+    pub bill_name: String,
+    pub proposer: Address,
+    pub required_approvers: Vec<Address>,
+    pub approvals: Vec<Address>,
+    pub rejections: Vec<Address>,
+    pub threshold: u32,
+    pub status: ProposalStatus,
+    pub created_at: u64,
+}
+
+/// Reference stored per-approver to find proposals they need to sign
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProposalRef {
+    pub proposer: Address,
+    pub proposal_id: u64,
+}
+
 /// Per-user storage keys — no global owner, each wallet has its own namespace
 #[contracttype]
 pub enum DataKey {
-    NextId(Address),          // u64 - bill id counter per user
-    Bill(Address, u64),       // Bill - per user + bill ID
-    BillIds(Address),         // Vec<u64> - list of bill IDs per user
-    PaymentNextId(Address),   // u64 - payment record counter per user
-    Payment(Address, u64),    // PaymentRecord - per user + payment ID
-    PaymentIds(Address),      // Vec<u64> - list of payment record IDs per user
+    NextId(Address),            // u64 - bill id counter per user
+    Bill(Address, u64),         // Bill - per user + bill ID
+    BillIds(Address),           // Vec<u64> - list of bill IDs per user
+    PaymentNextId(Address),     // u64 - payment record counter per user
+    Payment(Address, u64),      // PaymentRecord - per user + payment ID
+    PaymentIds(Address),        // Vec<u64> - list of payment record IDs per user
+    ProposalNextId(Address),    // u64 - proposal id counter per proposer
+    ProposalData(Address, u64), // Proposal - per proposer + proposal ID
+    ProposalIds(Address),       // Vec<u64> - list of proposal IDs per proposer
+    ApproverProposals(Address), // Vec<ProposalRef> - proposals an address needs to sign
 }
 
 #[contract]
@@ -404,6 +442,280 @@ impl AutopayContract {
         }
         records
     }
+
+    /// Create a multisig payment proposal for a bill.
+    /// required_approvers must all sign; threshold sets minimum approvals needed.
+    pub fn propose_payment(
+        env: Env,
+        caller: Address,
+        bill_id: u64,
+        required_approvers: Vec<Address>,
+        threshold: u32,
+    ) -> Proposal {
+        caller.require_auth();
+
+        if threshold == 0 {
+            panic!("threshold must be at least 1");
+        }
+        if threshold > required_approvers.len() {
+            panic!("threshold cannot exceed number of approvers");
+        }
+
+        let bill: Bill = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Bill(caller.clone(), bill_id))
+            .expect("bill not found");
+
+        let id: u64 = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalNextId(caller.clone()))
+            .unwrap_or(1u64);
+
+        let proposal = Proposal {
+            id,
+            bill_id,
+            bill_name: bill.name,
+            proposer: caller.clone(),
+            required_approvers,
+            approvals: Vec::new(&env),
+            rejections: Vec::new(&env),
+            threshold,
+            status: ProposalStatus::Pending,
+            created_at: env.ledger().timestamp(),
+        };
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalData(caller.clone(), id), &proposal);
+
+        let mut ids: Vec<u64> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalIds(caller.clone()))
+            .unwrap_or(Vec::new(&env));
+        ids.push_back(id);
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalIds(caller.clone()), &ids);
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalNextId(caller.clone()), &(id + 1));
+
+        // Index this proposal under each required approver so they can
+        // discover it without knowing the proposer's address.
+        for approver in proposal.required_approvers.iter() {
+            let mut refs: Vec<ProposalRef> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ApproverProposals(approver.clone()))
+                .unwrap_or(Vec::new(&env));
+            refs.push_back(ProposalRef {
+                proposer: caller.clone(),
+                proposal_id: id,
+            });
+            env.storage()
+                .persistent()
+                .set(&DataKey::ApproverProposals(approver), &refs);
+        }
+
+        env.events().publish((symbol_short!("prop_new"),), id);
+        proposal
+    }
+
+    /// Approve a multisig proposal. Caller must be in required_approvers.
+    pub fn approve_proposal(env: Env, approver: Address, proposer: Address, proposal_id: u64) {
+        approver.require_auth();
+
+        let mut proposal: Proposal = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalData(proposer.clone(), proposal_id))
+            .expect("proposal not found");
+
+        if proposal.status != ProposalStatus::Pending {
+            panic!("proposal is not pending");
+        }
+
+        let mut authorized = false;
+        for a in proposal.required_approvers.iter() {
+            if a == approver {
+                authorized = true;
+                break;
+            }
+        }
+        if !authorized {
+            panic!("not an authorized approver");
+        }
+
+        for a in proposal.approvals.iter() {
+            if a == approver {
+                panic!("already approved");
+            }
+        }
+        for r in proposal.rejections.iter() {
+            if r == approver {
+                panic!("already rejected");
+            }
+        }
+
+        proposal.approvals.push_back(approver);
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalData(proposer, proposal_id), &proposal);
+        env.events().publish((symbol_short!("prop_apv"),), proposal_id);
+    }
+
+    /// Reject a multisig proposal. Caller must be in required_approvers.
+    pub fn reject_proposal(env: Env, rejector: Address, proposer: Address, proposal_id: u64) {
+        rejector.require_auth();
+
+        let mut proposal: Proposal = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalData(proposer.clone(), proposal_id))
+            .expect("proposal not found");
+
+        if proposal.status != ProposalStatus::Pending {
+            panic!("proposal is not pending");
+        }
+
+        let mut authorized = false;
+        for a in proposal.required_approvers.iter() {
+            if a == rejector {
+                authorized = true;
+                break;
+            }
+        }
+        if !authorized {
+            panic!("not an authorized approver");
+        }
+
+        for a in proposal.approvals.iter() {
+            if a == rejector {
+                panic!("already approved");
+            }
+        }
+        for r in proposal.rejections.iter() {
+            if r == rejector {
+                panic!("already rejected");
+            }
+        }
+
+        proposal.rejections.push_back(rejector);
+
+        // Mark rejected when threshold can no longer be met
+        let max_possible = proposal
+            .required_approvers
+            .len()
+            .saturating_sub(proposal.rejections.len());
+        if max_possible < proposal.threshold {
+            proposal.status = ProposalStatus::Rejected;
+        }
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalData(proposer, proposal_id), &proposal);
+        env.events().publish((symbol_short!("prop_rej"),), proposal_id);
+    }
+
+    /// Execute a proposal once the approval threshold is met.
+    /// Anyone can trigger execution once the threshold is met.
+    /// Security is enforced by the on-chain approval count — no additional
+    /// caller auth is required (the approvers already signed on-chain).
+    pub fn execute_proposal(env: Env, proposer: Address, proposal_id: u64) {
+        let mut proposal: Proposal = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalData(proposer.clone(), proposal_id))
+            .expect("proposal not found");
+
+        if proposal.status != ProposalStatus::Pending {
+            panic!("proposal is not pending");
+        }
+        if proposal.approvals.len() < proposal.threshold {
+            panic!("approval threshold not met");
+        }
+
+        proposal.status = ProposalStatus::Executed;
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProposalData(proposer, proposal_id), &proposal);
+        env.events().publish((symbol_short!("prop_exe"),), proposal_id);
+    }
+
+    /// Get all proposals created by a wallet.
+    pub fn get_proposals(env: Env, caller: Address) -> Vec<Proposal> {
+        let ids: Vec<u64> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalIds(caller.clone()))
+            .unwrap_or(Vec::new(&env));
+
+        let mut proposals: Vec<Proposal> = Vec::new(&env);
+        for id in ids.iter() {
+            if let Some(proposal) = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ProposalData(caller.clone(), id))
+            {
+                proposals.push_back(proposal);
+            }
+        }
+        proposals
+    }
+
+    /// Get only pending proposals created by a wallet.
+    pub fn get_pending_proposals(env: Env, caller: Address) -> Vec<Proposal> {
+        let ids: Vec<u64> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProposalIds(caller.clone()))
+            .unwrap_or(Vec::new(&env));
+
+        let mut pending: Vec<Proposal> = Vec::new(&env);
+        for id in ids.iter() {
+            if let Some(proposal) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, Proposal>(&DataKey::ProposalData(caller.clone(), id))
+            {
+                if proposal.status == ProposalStatus::Pending {
+                    pending.push_back(proposal);
+                }
+            }
+        }
+        pending
+    }
+
+    /// Get pending proposals that require this wallet's approval
+    /// (i.e., this address is listed as a required approver).
+    pub fn get_proposals_as_approver(env: Env, approver: Address) -> Vec<Proposal> {
+        let refs: Vec<ProposalRef> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ApproverProposals(approver.clone()))
+            .unwrap_or(Vec::new(&env));
+
+        let mut pending: Vec<Proposal> = Vec::new(&env);
+        for pref in refs.iter() {
+            if let Some(proposal) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, Proposal>(&DataKey::ProposalData(
+                    pref.proposer.clone(),
+                    pref.proposal_id,
+                ))
+            {
+                if proposal.status == ProposalStatus::Pending {
+                    pending.push_back(proposal);
+                }
+            }
+        }
+        pending
+    }
 }
 
 #[cfg(test)]
@@ -536,5 +848,108 @@ mod test {
         // Other user has empty history
         let other_history = client.get_payment_history(&other_user);
         assert_eq!(other_history.len(), 0);
+    }
+
+    #[test]
+    fn test_multisig_approve_and_execute() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register(AutopayContract, ());
+        let client = AutopayContractClient::new(&env, &contract_id);
+
+        let proposer  = Address::generate(&env);
+        let approver1 = Address::generate(&env);
+        let approver2 = Address::generate(&env);
+        let recipient = Address::generate(&env);
+
+        // Proposer must own a bill
+        let bill = client.add_bill(
+            &proposer,
+            &String::from_str(&env, "Office Rent"),
+            &recipient,
+            &200_0000000,
+            &String::from_str(&env, "XLM"),
+            &BillType::Recurring,
+            &Frequency::Monthly,
+            &1,
+            &1700000000,
+        );
+
+        // Create a 2-of-2 proposal
+        let mut approvers: Vec<Address> = Vec::new(&env);
+        approvers.push_back(approver1.clone());
+        approvers.push_back(approver2.clone());
+        let proposal = client.propose_payment(&proposer, &bill.id, &approvers, &2);
+        assert_eq!(proposal.id, 1);
+        assert_eq!(proposal.bill_id, bill.id);
+        assert_eq!(proposal.threshold, 2);
+        assert_eq!(proposal.status, ProposalStatus::Pending);
+
+        // Pending proposals listed
+        let pending = client.get_pending_proposals(&proposer);
+        assert_eq!(pending.len(), 1);
+
+        // First approval — threshold not yet met
+        client.approve_proposal(&approver1, &proposer, &proposal.id);
+        let still_pending = client.get_pending_proposals(&proposer);
+        assert_eq!(still_pending.len(), 1);
+
+        // Second approval — threshold met
+        client.approve_proposal(&approver2, &proposer, &proposal.id);
+
+        // Execute
+        client.execute_proposal(&proposer, &proposal.id);
+
+        // No longer pending
+        let after_exec = client.get_pending_proposals(&proposer);
+        assert_eq!(after_exec.len(), 0);
+
+        // Still shows up in get_proposals as Executed
+        let all = client.get_proposals(&proposer);
+        assert_eq!(all.len(), 1);
+        assert_eq!(all.get(0).unwrap().status, ProposalStatus::Executed);
+    }
+
+    #[test]
+    fn test_multisig_rejection() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register(AutopayContract, ());
+        let client = AutopayContractClient::new(&env, &contract_id);
+
+        let proposer  = Address::generate(&env);
+        let approver1 = Address::generate(&env);
+        let approver2 = Address::generate(&env);
+        let recipient = Address::generate(&env);
+
+        let bill = client.add_bill(
+            &proposer,
+            &String::from_str(&env, "Software License"),
+            &recipient,
+            &10_0000000,
+            &String::from_str(&env, "XLM"),
+            &BillType::OneTime,
+            &Frequency::None,
+            &0,
+            &1700000000,
+        );
+
+        // 1-of-2 threshold — only one approval needed
+        let mut approvers: Vec<Address> = Vec::new(&env);
+        approvers.push_back(approver1.clone());
+        approvers.push_back(approver2.clone());
+        let proposal = client.propose_payment(&proposer, &bill.id, &approvers, &1);
+        assert_eq!(proposal.status, ProposalStatus::Pending);
+
+        // Both reject — threshold can never be met
+        client.reject_proposal(&approver1, &proposer, &proposal.id);
+        client.reject_proposal(&approver2, &proposer, &proposal.id);
+
+        let all = client.get_proposals(&proposer);
+        assert_eq!(all.get(0).unwrap().status, ProposalStatus::Rejected);
+
+        // No pending proposals remain
+        let pending = client.get_pending_proposals(&proposer);
+        assert_eq!(pending.len(), 0);
     }
 }

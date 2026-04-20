@@ -9,12 +9,9 @@ export default function TelegramSettings({
 }) {
   const [chatId, setChatId] = useState(config.chatId);
 
-  const handleSave = () => {
-    onUpdate({
-      chatId: chatId.trim(),
-      enabled: !!chatId.trim(),
-    });
-    onClose();
+  // Called by useTelegram on auto-save after successful test
+  const handleAutoSave = (savedId) => {
+    onUpdate({ chatId: savedId, enabled: true });
   };
 
   const handleDisable = () => {
@@ -75,21 +72,24 @@ export default function TelegramSettings({
         {testStatus && (
           <div className={`test-status ${testStatus === 'success' ? 'test-success' : testStatus === 'sending' ? 'test-sending' : 'test-error'}`}>
             {testStatus === 'sending' && '⏳ Sending test message...'}
-            {testStatus === 'success' && '✅ Test message sent! Check your Telegram.'}
+            {testStatus === 'success' && '✅ Test message sent — notifications enabled!'}
             {testStatus.startsWith('error') && `❌ ${testStatus}`}
+          </div>
+        )}
+
+        {config.enabled && (
+          <div className="test-status test-success" style={{ marginBottom: '0.5rem' }}>
+            ✅ Notifications are enabled for Chat ID: {config.chatId}
           </div>
         )}
 
         <div className="telegram-actions">
           <button
-            className="btn-secondary"
-            onClick={() => onTest(chatId.trim())}
+            className="btn-primary"
+            onClick={() => onTest(chatId.trim(), handleAutoSave)}
             disabled={!chatId.trim() || testStatus === 'sending'}
           >
-            🧪 Test Connection
-          </button>
-          <button className="btn-primary" onClick={handleSave}>
-            💾 Save &amp; Enable
+            {testStatus === 'sending' ? '⏳ Testing…' : '🧪 Test & Enable'}
           </button>
         </div>
 

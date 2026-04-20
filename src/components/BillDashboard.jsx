@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import AddBillForm from './AddBillForm';
+import MultisigModal from './MultisigModal';
+import ApprovalsTab from './ApprovalsTab';
 
 function statusBadge(status) {
   const labels = {
@@ -30,9 +32,36 @@ function formatDate(iso) {
   });
 }
 
-export default function BillDashboard({ bills, addBill, pauseBill, deleteBill }) {
+export default function BillDashboard({
+  bills, addBill, pauseBill, deleteBill, publicKey, signTransaction,
+  pendingProposals, proposalsAsApprover, multisigLoading, multisigError,
+  createProposal, approveProposal, rejectProposal, executeProposal,
+  voteHistory, clearVoteHistory, paymentHistory,
+}) {
   const [showForm, setShowForm] = useState(false);
-  const [filter, setFilter] = useState('unpaid'); // unpaid, recurring, one-time, completed, all
+  const [filter, setFilter] = useState('unpaid'); // unpaid, recurring, one-time, completed, all, approvals
+  const [multisigBill, setMultisigBill] = useState(null); // bill for which MultisigModal is open
+
+  /**
+   * Called by AddBillForm with an optional second arg for multisig.
+   * If multisigOpts = { approvers, threshold } → create proposal immediately after adding.
+   */
+  async function handleAddBill(bill, multisigOpts) {
+    const newBill = await addBill(bill);
+    if (multisigOpts && newBill?.contractId) {
+      try {
+        await createProposal(newBill.contractId, multisigOpts.approvers, multisigOpts.threshold);
+      } catch (e) {
+        console.error('[Multisig] Could not create proposal after adding bill:', e?.message);
+      }
+    }
+  }
+
+  // Find an active multisig proposal for a given bill (created by the current wallet)
+  const getProposalForBill = (bill) =>
+    (pendingProposals || []).find(
+      (p) => p.status === 'pending' && String(p.billId) === String(bill.contractId)
+    ) ?? null;
 
   const isUnpaid = (bill) => bill.status !== 'completed' && bill.status !== 'paid';
 
@@ -60,13 +89,13 @@ export default function BillDashboard({ bills, addBill, pauseBill, deleteBill })
         <h2>Payments</h2>
         <div className="section-header-actions">
           <div className="filter-tabs">
-            {['unpaid', 'recurring', 'one-time', 'completed', 'all'].map((f) => (
+            {['unpaid', 'recurring', 'one-time', 'completed', 'all', 'approvals'].map((f) => (
               <button
                 key={f}
                 className={`filter-tab ${filter === f ? 'active' : ''}`}
                 onClick={() => setFilter(f)}
               >
-                {f === 'unpaid' ? 'Unpaid' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'unpaid' ? 'Unpaid' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f === 'all' ? 'All' : f === 'approvals' ? 'Approvals' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -76,7 +105,21 @@ export default function BillDashboard({ bills, addBill, pauseBill, deleteBill })
         </div>
       </div>
 
-      {filteredBills.length === 0 ? (
+      {filter === 'approvals' ? (
+        <ApprovalsTab
+          publicKey={publicKey}
+          pendingProposals={pendingProposals}
+          proposalsAsApprover={proposalsAsApprover}
+          loading={multisigLoading}
+          error={multisigError}
+          approveProposal={approveProposal}
+          rejectProposal={rejectProposal}
+          executeProposal={executeProposal}
+          voteHistory={voteHistory}
+          clearVoteHistory={clearVoteHistory}
+          paymentHistory={paymentHistory}
+        />
+      ) : filteredBills.length === 0 ? (
         <div className="empty-state">
           <p>{filter === 'unpaid' ? 'No unpaid payments.' : filter === 'all' ? 'No payments yet. Add your first payment to get started.' : `No ${filter} payments.`}</p>
         </div>
@@ -119,23 +162,56 @@ export default function BillDashboard({ bills, addBill, pauseBill, deleteBill })
                   </span>
                 </div>
               </div>
-              {bill.status !== 'completed' && bill.status !== 'paid' && (
-                <div className="bill-card-actions">
-                  <button onClick={() => pauseBill(bill.id)} className="btn-secondary">
-                    {bill.status === 'active' || bill.status === 'low_balance' ? '⏸ Pause' : '▶ Resume'}
-                  </button>
-                  <button onClick={() => deleteBill(bill.id)} className="btn-danger">
-                    🗑 Delete
-                  </button>
-                </div>
-              )}
+              {bill.status !== 'completed' && bill.status !== 'paid' && (function() {
+                  const proposal = getProposalForBill(bill);
+                  const thresholdMet = proposal && (proposal.approvals || []).length >= proposal.threshold;
+                  return (
+                    <div className="bill-card-actions">
+                      <button onClick={() => pauseBill(bill.id)} className="btn-secondary">
+                        {bill.status === 'active' || bill.status === 'low_balance' ? '⏸ Pause' : '▶ Resume'}
+                      </button>
+
+                      {!proposal ? (
+                        // No proposal yet — allow creating one
+                        <button onClick={() => setMultisigBill(bill)} className="btn-secondary">
+                          🔐 Require Approval
+                        </button>
+                      ) : thresholdMet ? (
+                        // Threshold met — ready to execute
+                        <button
+                          className="btn-primary"
+                          onClick={() => executeProposal(proposal.proposer, proposal.id)}
+                        >
+                          ⚡ Execute ({(proposal.approvals || []).length}/{proposal.threshold} ✓)
+                        </button>
+                      ) : (
+                        // Proposal pending, waiting for co-signers
+                        <span className="badge badge-pending" style={{ padding: '0.35rem 0.75rem' }}>
+                          ⏳ {(proposal.approvals || []).length}/{proposal.threshold} Approvals
+                        </span>
+                      )}
+
+                      <button onClick={() => deleteBill(bill.id)} className="btn-danger">
+                        🗑 Delete
+                      </button>
+                    </div>
+                  );
+                })()}
             </div>
           ))}
         </div>
       )}
 
       {showForm && (
-        <AddBillForm onAdd={addBill} onClose={() => setShowForm(false)} />
+        <AddBillForm onAdd={handleAddBill} onClose={() => setShowForm(false)} />
+      )}
+
+      {multisigBill && (
+        <MultisigModal
+          bill={multisigBill}
+          onConfirm={createProposal}
+          onClose={() => setMultisigBill(null)}
+        />
       )}
     </div>
   );

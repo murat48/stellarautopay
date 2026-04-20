@@ -15,7 +15,10 @@ import {
   Address,
 } from '@stellar/stellar-sdk';
 
-export const CONTRACT_ID = 'CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS';
+// export const CONTRACT_ID = 'CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS';old contract
+// export const CONTRACT_ID = 'CDS5OOWCCNADPLSLTNHPU7HKPB2IRQA5O7IA5HYTMOR3AP67LYVGV2LG';old multi sig
+// export const CONTRACT_ID = 'CC5IKFWR6RGKAXKCN6762EJHCIF7AFLOPKHXZWQTWVDNEDFLKHWOAR5K'; // approver index contract
+export const CONTRACT_ID = 'CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL'; // no-auth execute
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 
@@ -325,6 +328,99 @@ export async function getPaymentHistory(publicKey) {
     };
   });
 }
+
+// ─── Multisig / Proposal API ───────────────────────────────────────────────
+
+/** Encode a JS array of G... addresses as a ScvVec of address ScVals. */
+function vecOfAddr(pubkeys) {
+  return xdr.ScVal.scvVec(pubkeys.map((pk) => addr(pk)));
+}
+
+/**
+ * Convert a scValToNative-decoded contract Proposal to frontend shape.
+ * Assumes on-chain Proposal struct fields:
+ *   id, bill_id, bill_name, proposer, required_approvers, approvals,
+ *   rejections, threshold, status, created_at
+ */
+export function contractProposalToFrontend(proposal) {
+  const statusTag        = Array.isArray(proposal.status)             ? proposal.status[0]             : (proposal.status ?? 'Pending');
+  const approvals        = Array.isArray(proposal.approvals)          ? proposal.approvals          : [];
+  const rejections       = Array.isArray(proposal.rejections)         ? proposal.rejections         : [];
+  const requiredApprovers = Array.isArray(proposal.required_approvers) ? proposal.required_approvers : [];
+  return {
+    id:                String(proposal.id),
+    contractId:        Number(proposal.id),
+    billId:            String(proposal.bill_id),
+    billName:          proposal.bill_name ?? '',
+    proposer:          proposal.proposer ?? '',
+    requiredApprovers,
+    approvals,
+    rejections,
+    threshold:         Number(proposal.threshold ?? 1),
+    status:            statusTag.toLowerCase(),
+    createdAt:         new Date(Number(proposal.created_at) * 1000).toISOString(),
+  };
+}
+
+/** Propose a multisig payment for a bill. signFn from makeWalletSignFn. */
+export async function proposePayment(publicKey, signFn, billId, requiredApprovers, threshold) {
+  return invokeContract(
+    publicKey, signFn, 'propose_payment',
+    addr(publicKey),
+    u64(billId),
+    vecOfAddr(requiredApprovers),
+    u32(threshold),
+  );
+}
+
+/** Approve a multisig proposal. signFn from makeWalletSignFn. */
+export async function approveProposal(approverKey, signFn, proposerKey, proposalId) {
+  return invokeContract(
+    approverKey, signFn, 'approve_proposal',
+    addr(approverKey),
+    addr(proposerKey),
+    u64(proposalId),
+  );
+}
+
+/** Reject a multisig proposal. signFn from makeWalletSignFn. */
+export async function rejectProposal(rejectorKey, signFn, proposerKey, proposalId) {
+  return invokeContract(
+    rejectorKey, signFn, 'reject_proposal',
+    addr(rejectorKey),
+    addr(proposerKey),
+    u64(proposalId),
+  );
+}
+
+/** Execute a proposal once threshold is met. No caller auth required — threshold approvals are sufficient. */
+export async function executeProposal(publicKey, signFn, proposerKey, proposalId) {
+  return invokeContract(
+    publicKey, signFn, 'execute_proposal',
+    addr(proposerKey),
+    u64(proposalId),
+  );
+}
+
+/** Fetch all proposals for a wallet (as proposer). Returns [] on error. */
+export async function getProposals(publicKey) {
+  const result = await queryContract(publicKey, 'get_proposals', addr(publicKey));
+  return Array.isArray(result) ? result.map(contractProposalToFrontend) : [];
+}
+
+/** Fetch only pending proposals for a wallet (as proposer). Returns [] on error. */
+export async function getPendingProposals(publicKey) {
+  const result = await queryContract(publicKey, 'get_pending_proposals', addr(publicKey));
+  return Array.isArray(result) ? result.map(contractProposalToFrontend) : [];
+}
+
+/** Fetch pending proposals where this wallet is a required approver. Returns [] on error. */
+export async function getProposalsAsApprover(publicKey) {
+  const result = await queryContract(publicKey, 'get_proposals_as_approver', addr(publicKey));
+  return Array.isArray(result) ? result.map(contractProposalToFrontend) : [];
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 /**
  * Convert frontend form data to raw contract call parameter values.
