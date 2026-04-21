@@ -138,20 +138,45 @@ export default function ApprovalsTab({
     );
   };
 
-  // Only show proposals where this wallet is a required approver (pending status)
-  const pendingForMe = (proposalsAsApprover || []).filter((p) => p.status === 'pending');
+  // Pending = status pending AND user hasn't voted yet
+  const pendingForMe = (proposalsAsApprover || []).filter(
+    (p) => p.status === 'pending' &&
+      !(p.approvals || []).includes(publicKey) &&
+      !(p.rejections || []).includes(publicKey),
+  );
+
+  // Approved = user has already voted (approved or rejected)
+  const votedByMe = (proposalsAsApprover || []).filter(
+    (p) =>
+      (p.approvals || []).includes(publicKey) ||
+      (p.rejections || []).includes(publicKey),
+  );
+
+  const [subTab, setSubTab] = useState('pending');
 
   return (
     <div className="bill-dashboard">
-      <div className="section-header">
-        <h2>Pending Approvals</h2>
+      {/* Sub-tab bar */}
+      <div className="filter-tabs" style={{ marginBottom: '1.25rem' }}>
+        <button
+          className={`filter-tab${subTab === 'pending' ? ' active' : ''}`}
+          onClick={() => setSubTab('pending')}
+        >
+          Pending{pendingForMe.length > 0 ? ` (${pendingForMe.length})` : ''}
+        </button>
+        <button
+          className={`filter-tab${subTab === 'approved' ? ' active' : ''}`}
+          onClick={() => setSubTab('approved')}
+        >
+          Approved{votedByMe.length > 0 ? ` (${votedByMe.length})` : ''}
+        </button>
       </div>
 
       {error && <div className="error-msg" style={{ marginBottom: '1rem' }}>{error}</div>}
 
       {loading ? (
         <div className="empty-state"><p>Loading proposals…</p></div>
-      ) : (
+      ) : subTab === 'pending' ? (
         <>
           {pendingForMe.length === 0 ? (
             <div className="empty-state"><p>No proposals awaiting your signature.</p></div>
@@ -161,7 +186,7 @@ export default function ApprovalsTab({
             </div>
           )}
 
-          {/* My Vote History */}
+          {/* My Vote History (under pending tab) */}
           {(voteHistory || []).length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2rem' }}>
@@ -245,6 +270,17 @@ export default function ApprovalsTab({
                 </table>
               </div>
             </>
+          )}
+        </>
+      ) : (
+        /* ── Approved tab ── */
+        <>
+          {votedByMe.length === 0 ? (
+            <div className="empty-state"><p>You haven't voted on any proposals yet.</p></div>
+          ) : (
+            <div className="bill-grid">
+              {votedByMe.map(renderProposalCard)}
+            </div>
           )}
         </>
       )}
