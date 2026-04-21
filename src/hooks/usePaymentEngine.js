@@ -81,7 +81,7 @@ function isPaymentDue(bill, now) {
   return now >= new Date(due.getTime() - 30_000); // 30s jitter only
 }
 
-export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn, pendingProposals = [], executeProposalAndPay = null) {
+export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEnabled, autoPayLoading, contractReady, bills, updateBill, completeBill, markBillPaid, addEntry, refreshBalance, balances, sendTelegramNotification, walletSignAndSubmit, walletSignFn, pendingProposals = [], executeProposalAndPay = null) {
   const processingRef = useRef(false);
   const notifiedRef = useRef(new Set());
   // Track bills already paid in this session to prevent double-payment on re-render / stale state
@@ -91,6 +91,9 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     const sessionKp = getSessionKeypair();
     // Never process payments from stale localStorage data — wait for on-chain contract data
     if (!publicKey || !contractReady || processingRef.current) return;
+    // Block execution while auto-pay setup is still in progress to avoid
+    // triggering a Freighter popup before we know if auto mode is available.
+    if (autoPayLoading) return;
     // Auto-pay OFF: need walletSignAndSubmit for manual path
     // Auto-pay ON: need session keypair
     const isAutoMode = autoPayEnabled && !!sessionKp;
@@ -336,6 +339,10 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
 
   useEffect(() => {
     if (!publicKey || !contractReady) return;
+    // Wait for auto-pay setup to complete before starting the engine.
+    // This prevents manual-mode (Freighter popup) from firing before we know
+    // whether auto-pay was successfully enabled on this session.
+    if (autoPayLoading) return;
     const sessionKp = getSessionKeypair();
     const isAutoMode = autoPayEnabled && !!sessionKp;
     const isManualMode = !autoPayEnabled && typeof walletSignAndSubmit === 'function';
@@ -350,7 +357,7 @@ export default function usePaymentEngine(publicKey, getSessionKeypair, autoPayEn
     const interval = setInterval(run, 15_000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, autoPayEnabled, contractReady, walletSignAndSubmit]);
+  }, [publicKey, autoPayEnabled, autoPayLoading, contractReady, walletSignAndSubmit]);
 
   return { processPayments };
 }

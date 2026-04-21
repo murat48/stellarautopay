@@ -218,6 +218,7 @@ function App() {
     wallet.publicKey,
     wallet.getSessionKeypair,
     wallet.autoPayEnabled,
+    wallet.autoPayLoading,
     contractReady,
     bills,
     updateBill,
