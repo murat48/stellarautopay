@@ -87,6 +87,8 @@ All bill data and payment history live **on-chain** in a Soroban smart contract.
 ### 📉 Dashboard Metrics
 
 - Paid this month · Active bills · Due now · Next payment · Completed total
+  <br>
+<img src="/metrics.jpg" alt="" width="600"/><br>
 
 ### ⚠️ Low Balance Warning
 
