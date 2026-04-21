@@ -359,6 +359,7 @@ function App() {
           voteHistory={voteHistory}
           clearVoteHistory={clearVoteHistory}
           paymentHistory={history}
+          analytics={analytics}
         />
         <PaymentHistory history={history} clearHistory={clearHistory} />
       </main>

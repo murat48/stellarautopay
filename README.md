@@ -107,7 +107,7 @@ Step 1 — Proposer creates a payment proposal
   propose_payment(proposer, bill_id, [co_signer_1, co_signer_2], threshold)
   → Stored on-chain: approvals=[], status=Pending
 
-Step 2 — Each required co-signer approves independently  
+Step 2 — Each required co-signer approves independently
   approve_proposal(approver, proposer, proposal_id)
   → On-chain: approvals=[co_signer_1], status=Pending
 
@@ -122,20 +122,22 @@ Step 3 — When approvals ≥ threshold, anyone can execute
 
 Key functions:
 
-| Function | Auth | Description |
-|---|---|---|
-| `propose_payment` | Proposer | Creates a multisig proposal for a bill |
-| `approve_proposal` | Co-signer (must be in `required_approvers`) | Adds approval; panics if not authorized |
-| `reject_proposal` | Co-signer | Rejects; auto-marks proposal Rejected if threshold can no longer be met |
-| `execute_proposal` | Anyone | Executes if `approvals.len() >= threshold`; panics otherwise |
-| `get_proposals_as_approver` | None | Returns all pending proposals where address is a required approver |
+| Function                    | Auth                                        | Description                                                             |
+| --------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
+| `propose_payment`           | Proposer                                    | Creates a multisig proposal for a bill                                  |
+| `approve_proposal`          | Co-signer (must be in `required_approvers`) | Adds approval; panics if not authorized                                 |
+| `reject_proposal`           | Co-signer                                   | Rejects; auto-marks proposal Rejected if threshold can no longer be met |
+| `execute_proposal`          | Anyone                                      | Executes if `approvals.len() >= threshold`; panics otherwise            |
+| `get_proposals_as_approver` | None                                        | Returns all pending proposals where address is a required approver      |
 
 Security enforcement in `execute_proposal`:
+
 ```rust
 if proposal.approvals.len() < proposal.threshold {
     panic!("approval threshold not met");
 }
 ```
+
 No `require_auth()` on execute — security is the on-chain approval count, not the caller identity.
 
 ### Live On-Chain Proof
@@ -144,14 +146,14 @@ The following complete multisig flow was executed on Stellar Testnet and is perm
 
 **Contract:** [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)
 
-| Step | Function | Wallet | Timestamp (UTC) | Details |
-|------|----------|--------|------------------|---------|
-| 1 | `add_bill` | `GDYA…GK7M` | 2026-04-20 20:36:25 | Bill #8 created: 23 XLM one-time payment |
-| 2 | `propose_payment` | `GDYA…GK7M` | 2026-04-20 20:36:25 | Proposal #8, approvers: `[GALD…S7SA]`, threshold: 1 |
-| 3 | `approve_proposal` | `GALD…S7SA` ⬅ different wallet | 2026-04-20 20:37:30 | Co-signer approved; approvals: `[GALD…S7SA]` |
-| 4 | `execute_proposal` | `GDYA…GK7M` | 2026-04-20 20:44:36 | Threshold met (1/1) → executed |
-| 5 | `record_payment` | `GDYA…GK7M` | 2026-04-20 20:44:46 | TX: `cdc73de3…3042`, 23 XLM, status: Success |
-| 6 | `mark_paid` | `GDYA…GK7M` | 2026-04-20 20:44:51 | Bill #8 marked Paid |
+| Step | Function           | Wallet                         | Timestamp (UTC)     | Details                                             |
+| ---- | ------------------ | ------------------------------ | ------------------- | --------------------------------------------------- |
+| 1    | `add_bill`         | `GDYA…GK7M`                    | 2026-04-20 20:36:25 | Bill #8 created: 23 XLM one-time payment            |
+| 2    | `propose_payment`  | `GDYA…GK7M`                    | 2026-04-20 20:36:25 | Proposal #8, approvers: `[GALD…S7SA]`, threshold: 1 |
+| 3    | `approve_proposal` | `GALD…S7SA` ⬅ different wallet | 2026-04-20 20:37:30 | Co-signer approved; approvals: `[GALD…S7SA]`        |
+| 4    | `execute_proposal` | `GDYA…GK7M`                    | 2026-04-20 20:44:36 | Threshold met (1/1) → executed                      |
+| 5    | `record_payment`   | `GDYA…GK7M`                    | 2026-04-20 20:44:46 | TX: `cdc73de3…3042`, 23 XLM, status: Success        |
+| 6    | `mark_paid`        | `GDYA…GK7M`                    | 2026-04-20 20:44:51 | Bill #8 marked Paid                                 |
 
 **Payment TX:** [`cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042`](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042)
 
@@ -215,16 +217,16 @@ DataKey::ApproverProposals(Address)      → Vec<ProposalRef>  (index for co-sig
 Verified on [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet).
 Total unique wallets: **7** (collecting 30+ via Google Form)
 
-| #   | Wallet Address                                               | Actions                                              |
-| --- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| 1   | `GC4COEPJQRXZFTRZJYOYEIHVX6OCSZD5GMOAI6JGRDM3Y33VKBLODYUE`  | add_bill, mark_paid, pause_bill                      |
-| 2   | `GCNA5EMJNXZPO57ARVJYQ5SN2DYYPD6ZCCENQ5AQTMVNKN77RDIPMI3A`  | add_bill, record_payment, update_next_due            |
-| 3   | `GALDPLQ62RAX3V7RJE73D3C2F4SKHGCJ3MIYJ4MLU2EAIUXBDSUVS7SA`  | approve_proposal (co-signer multisig proof)          |
-| 4   | `GDBOBVGP6HNLL66IOTSR6COGSZYRTSRDXBUD2CDDN3C5XGUT23TQ54J2`  | add_bill, record_payment, mark_paid                  |
-| 5   | `GAJXYRRBECPQVCOCCLBCCZ2KGGNEHL32TLJRT2JWLNVE4HJ35OAKAPH2`  | add_bill, record_payment, mark_paid                  |
-| 6   | `GD72JZQAJPGLSLND6GPTSZ64PWMVY3JP5QKQJ32RW2GJCSVOSBPNX2EF`  | add_bill, record_payment, mark_paid                  |
-| 7   | `GDYAPFZH5R6EKEQKJ3TKLQPZQASNXSN5IYDPTQ7MBRLZGE5ABGYGK7M`   | proposer (multisig proof) + add_bill, execute, pay   |
-| 8–30| _Collecting via [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)_ | Addresses added as users submit feedback |
+| #    | Wallet Address                                                                                                                      | Actions                                            |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1    | `GC4COEPJQRXZFTRZJYOYEIHVX6OCSZD5GMOAI6JGRDM3Y33VKBLODYUE`                                                                          | add_bill, mark_paid, pause_bill                    |
+| 2    | `GCNA5EMJNXZPO57ARVJYQ5SN2DYYPD6ZCCENQ5AQTMVNKN77RDIPMI3A`                                                                          | add_bill, record_payment, update_next_due          |
+| 3    | `GALDPLQ62RAX3V7RJE73D3C2F4SKHGCJ3MIYJ4MLU2EAIUXBDSUVS7SA`                                                                          | approve_proposal (co-signer multisig proof)        |
+| 4    | `GDBOBVGP6HNLL66IOTSR6COGSZYRTSRDXBUD2CDDN3C5XGUT23TQ54J2`                                                                          | add_bill, record_payment, mark_paid                |
+| 5    | `GAJXYRRBECPQVCOCCLBCCZ2KGGNEHL32TLJRT2JWLNVE4HJ35OAKAPH2`                                                                          | add_bill, record_payment, mark_paid                |
+| 6    | `GD72JZQAJPGLSLND6GPTSZ64PWMVY3JP5QKQJ32RW2GJCSVOSBPNX2EF`                                                                          | add_bill, record_payment, mark_paid                |
+| 7    | `GDYAPFZH5R6EKEQKJ3TKLQPZQASNXSN5IYDPTQ7MBRLZGE5ABGYGK7M`                                                                           | proposer (multisig proof) + add_bill, execute, pay |
+| 8–30 | _Collecting via [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)_ | Addresses added as users submit feedback           |
 
 ### Build & Deploy
 
@@ -256,14 +258,14 @@ Stellar Autopay uses two data sources for reading and writing blockchain state:
 
 Used for:
 
-| Operation | Horizon Call | Code Location |
-|---|---|---|
-| Load account + sequence number | `server.loadAccount(publicKey)` | `stellar.js` |
-| Fetch XLM + USDC balances | `account.balances` | `stellar.js:fetchBalances` |
-| Read existing account signers (session key cleanup) | `account.signers` | `stellar.js:buildAddSignerTx` |
-| Submit signed transactions | `server.submitTransaction(tx)` | `stellar.js:submitTx` |
-| Build `setOptions` to add/remove session signer | `TransactionBuilder` + `Operation.setOptions` | `stellar.js` |
-| Build payment transactions | `Operation.payment` | `stellar.js:buildPaymentTxXdr` |
+| Operation                                           | Horizon Call                                  | Code Location                  |
+| --------------------------------------------------- | --------------------------------------------- | ------------------------------ |
+| Load account + sequence number                      | `server.loadAccount(publicKey)`               | `stellar.js`                   |
+| Fetch XLM + USDC balances                           | `account.balances`                            | `stellar.js:fetchBalances`     |
+| Read existing account signers (session key cleanup) | `account.signers`                             | `stellar.js:buildAddSignerTx`  |
+| Submit signed transactions                          | `server.submitTransaction(tx)`                | `stellar.js:submitTx`          |
+| Build `setOptions` to add/remove session signer     | `TransactionBuilder` + `Operation.setOptions` | `stellar.js`                   |
+| Build payment transactions                          | `Operation.payment`                           | `stellar.js:buildPaymentTxXdr` |
 
 ### 2. Soroban RPC
 
@@ -271,13 +273,13 @@ Used for:
 
 Used for all smart contract reads and writes:
 
-| Operation | Contract Function | Returns |
-|---|---|---|
-| Fetch all bills | `get_all_bills(address)` | `Vec<Bill>` |
-| Fetch payment history | `get_payment_history(address)` | `Vec<PaymentRecord>` |
-| Fetch pending proposals (own) | `get_pending_proposals(address)` | `Vec<Proposal>` |
-| Fetch proposals as approver | `get_proposals_as_approver(address)` | `Vec<Proposal>` |
-| Write bill / payment / proposal | `add_bill`, `record_payment`, `propose_payment`, etc. | Struct |
+| Operation                       | Contract Function                                     | Returns              |
+| ------------------------------- | ----------------------------------------------------- | -------------------- |
+| Fetch all bills                 | `get_all_bills(address)`                              | `Vec<Bill>`          |
+| Fetch payment history           | `get_payment_history(address)`                        | `Vec<PaymentRecord>` |
+| Fetch pending proposals (own)   | `get_pending_proposals(address)`                      | `Vec<Proposal>`      |
+| Fetch proposals as approver     | `get_proposals_as_approver(address)`                  | `Vec<Proposal>`      |
+| Write bill / payment / proposal | `add_bill`, `record_payment`, `propose_payment`, etc. | Struct               |
 
 All contract calls use `simulateTransaction` → `assembleTransaction` → sign → `sendTransaction` → poll pattern via the Soroban RPC JSON-RPC API.
 
@@ -349,29 +351,29 @@ vercel deploy --prod # or push to GitHub for auto-deploy
 
 ### Application Security (OWASP Top 10)
 
-| OWASP Category | Relevant Risk | Mitigation in Stellar Autopay |
-|---|---|---|
-| A01 Broken Access Control | Unauthorised contract writes | `caller.require_auth()` on every state-changing contract function |
-| A02 Cryptographic Failures | Private key exposure | Keys never leave browser extension (Freighter / Wallets Kit); session key lives only in `useRef` RAM |
-| A03 Injection | XSS via user input | React DOM escaping; no `dangerouslySetInnerHTML`; all user strings rendered as text nodes |
-| A04 Insecure Design | Replay / double payment | In-memory `paidBillsRef` + localStorage deduplication key per bill+cycle |
-| A05 Security Misconfiguration | Exposed secrets | `VITE_TELEGRAM_BOT_TOKEN` in `.env`; `.gitignore` prevents commit; no other secrets |
-| A06 Vulnerable Components | Supply chain risk | Monthly `npm audit`; locked `package-lock.json`; pinned Soroban SDK v22 |
-| A07 Auth Failures | Session key abuse | Weight = 1 only; Stellar threshold unchanged; removed on disable/disconnect atomically |
-| A08 Software Integrity | Tampered WASM | WASM deployed via Stellar CLI; immutable on-chain after deployment |
-| A09 Logging Failures | Silent errors | Structured `logger.js` (levels: debug/info/warn/error); ring-buffer in localStorage; downloadable |
-| A10 SSRF | External API abuse | Only calls official Stellar Horizon + Soroban RPC endpoints; no user-controlled URLs |
+| OWASP Category                | Relevant Risk                | Mitigation in Stellar Autopay                                                                        |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| A01 Broken Access Control     | Unauthorised contract writes | `caller.require_auth()` on every state-changing contract function                                    |
+| A02 Cryptographic Failures    | Private key exposure         | Keys never leave browser extension (Freighter / Wallets Kit); session key lives only in `useRef` RAM |
+| A03 Injection                 | XSS via user input           | React DOM escaping; no `dangerouslySetInnerHTML`; all user strings rendered as text nodes            |
+| A04 Insecure Design           | Replay / double payment      | In-memory `paidBillsRef` + localStorage deduplication key per bill+cycle                             |
+| A05 Security Misconfiguration | Exposed secrets              | `VITE_TELEGRAM_BOT_TOKEN` in `.env`; `.gitignore` prevents commit; no other secrets                  |
+| A06 Vulnerable Components     | Supply chain risk            | Monthly `npm audit`; locked `package-lock.json`; pinned Soroban SDK v22                              |
+| A07 Auth Failures             | Session key abuse            | Weight = 1 only; Stellar threshold unchanged; removed on disable/disconnect atomically               |
+| A08 Software Integrity        | Tampered WASM                | WASM deployed via Stellar CLI; immutable on-chain after deployment                                   |
+| A09 Logging Failures          | Silent errors                | Structured `logger.js` (levels: debug/info/warn/error); ring-buffer in localStorage; downloadable    |
+| A10 SSRF                      | External API abuse           | Only calls official Stellar Horizon + Soroban RPC endpoints; no user-controlled URLs                 |
 
 ### Stellar-Specific Security
 
-| Risk | Mitigation |
-|---|---|
-| Session key max lifetime | Auto-revoked on wallet disconnect or auto-pay disable |
-| Session key weight | Always `weight=1`; cannot sign alone if master key weight > 1 |
+| Risk                           | Mitigation                                                                    |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| Session key max lifetime       | Auto-revoked on wallet disconnect or auto-pay disable                         |
+| Session key weight             | Always `weight=1`; cannot sign alone if master key weight > 1                 |
 | Multisig threshold enforcement | Contract panics if `approvals.len() < threshold`; cannot bypass in any caller |
-| Duplicate co-signer approval | `approve_proposal` panics if address already in `approvals` vec |
-| Orphaned session signers | Detected via `account.signers` on each enable; removed in same tx |
-| RPC error handling | All contract calls use simulate → assemble → sign → submit → poll pattern |
+| Duplicate co-signer approval   | `approve_proposal` panics if address already in `approvals` vec               |
+| Orphaned session signers       | Detected via `account.signers` on each enable; removed in same tx             |
+| RPC error handling             | All contract calls use simulate → assemble → sign → submit → poll pattern     |
 
 ---
 
@@ -431,6 +433,7 @@ vercel deploy --prod # or push to GitHub for auto-deploy
 ### 7. Metrics & Analytics
 
 The metrics strip at the top of the dashboard shows:
+
 - **Paid This Month** · **Recurring Active** · **Scheduled One-Time** · **Due Now** · **Next Payment** · **Completed**
 - **Active Days** — how many days this wallet has been active
 - **Retention** — days between first and last login
@@ -478,27 +481,27 @@ stellarautopay/
 
 ## ✅ Submission Checklist
 
-| Requirement | Status | Link / Proof |
-|---|---|---|
-| Public GitHub repository | ✅ | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay) |
-| Live demo deployed | ✅ | [stellarautopay.vercel.app](https://stellarautopay.vercel.app) |
-| README with complete documentation | ✅ | This file |
-| Minimum 15+ meaningful commits | ✅ 37 commits | `git log --oneline` |
-| Advanced feature: Multi-signature Logic | ✅ | [Section above](#-advanced-feature-multi-signature-logic) |
-| Advanced feature proof (on-chain TX) | ✅ | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042) |
-| Smart contract deployed | ✅ | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
-| Data indexing (Horizon + Soroban RPC) | ✅ | [Section above](#-data-indexing) |
-| Security checklist | ✅ | [Security Model](#-security-model) |
-| User guide (in-app + README) | ✅ | [User Guide section](#-user-guide) |
-| User metrics tracking (DAU, retention, TX rate) | ✅ | `useAnalytics.js` + MetricsStrip |
-| Production logging | ✅ | `logger.js` (levels + localStorage + download) |
-| Metrics dashboard | ✅ | Built-in MetricsStrip in app |
-| 30+ user wallet addresses | ⏳ | Collecting via Google Form |
-| Monitoring dashboard | ✅ | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl) |
-| Community contribution (Twitter/X post) | ⏳ | Post pending |
-| Google Form for user onboarding | ✅ | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform) |
-| Exported user responses (Excel/Sheets) | ✅ | [View Responses](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
-| Improvement plan with commit links | ✅ | [Section below](#improvement-plan) |
+| Requirement                                     | Status        | Link / Proof                                                                                                                |
+| ----------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Public GitHub repository                        | ✅            | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                              |
+| Live demo deployed                              | ✅            | [stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                              |
+| README with complete documentation              | ✅            | This file                                                                                                                   |
+| Minimum 15+ meaningful commits                  | ✅ 37 commits | `git log --oneline`                                                                                                         |
+| Advanced feature: Multi-signature Logic         | ✅            | [Section above](#-advanced-feature-multi-signature-logic)                                                                   |
+| Advanced feature proof (on-chain TX)            | ✅            | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042) |
+| Smart contract deployed                         | ✅            | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
+| Data indexing (Horizon + Soroban RPC)           | ✅            | [Section above](#-data-indexing)                                                                                            |
+| Security checklist                              | ✅            | [Security Model](#-security-model)                                                                                          |
+| User guide (in-app + README)                    | ✅            | [User Guide section](#-user-guide)                                                                                          |
+| User metrics tracking (DAU, retention, TX rate) | ✅            | `useAnalytics.js` + MetricsStrip                                                                                            |
+| Production logging                              | ✅            | `logger.js` (levels + localStorage + download)                                                                              |
+| Metrics dashboard                               | ✅            | Built-in MetricsStrip in app                                                                                                |
+| 30+ user wallet addresses                       | ⏳            | Collecting via Google Form                                                                                                  |
+| Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                |
+| Community contribution (Twitter/X post)         | ⏳            | Post pending                                                                                                                |
+| Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)            |
+| Exported user responses (Excel/Sheets)          | ✅            | [View Responses](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)  |
+| Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                          |
 
 ---
 
@@ -567,22 +570,22 @@ Based on ongoing user feedback patterns:
 
 ### Live Demo Script
 
-| Step | Action | What to show |
-|---|---|---|
-| 1 | Open [stellarautopay.vercel.app](https://stellarautopay.vercel.app) | Landing / connect screen |
-| 2 | Connect Freighter wallet | Balance display: XLM + USDC |
-| 3 | Add a one-time bill | Form with recipient, amount, due time |
-| 4 | Show bill card in dashboard | Due date, amount, Active badge |
-| 5 | Enable Auto-Pay | Freighter popup → session key added |
-| 6 | Wait 15 seconds | Bill executes automatically |
-| 7 | Show payment history | TX hash + Stellar Expert link |
-| 8 | Show Telegram alert | Phone notification |
-| 9 | Add multisig bill | Enable 🔐 toggle, add co-signer |
-| 10 | Switch to co-signer wallet | Approvals tab — pending proposal visible |
-| 11 | Approve proposal | Co-signer signs on-chain |
-| 12 | Execute proposal | Proposer clicks Execute — payment sent |
-| 13 | Show MetricsStrip | Active Days · Retention · TX Success Rate |
-| 14 | Show UptimeRobot | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl) — 100% uptime |
+| Step | Action                                                              | What to show                                                                               |
+| ---- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1    | Open [stellarautopay.vercel.app](https://stellarautopay.vercel.app) | Landing / connect screen                                                                   |
+| 2    | Connect Freighter wallet                                            | Balance display: XLM + USDC                                                                |
+| 3    | Add a one-time bill                                                 | Form with recipient, amount, due time                                                      |
+| 4    | Show bill card in dashboard                                         | Due date, amount, Active badge                                                             |
+| 5    | Enable Auto-Pay                                                     | Freighter popup → session key added                                                        |
+| 6    | Wait 15 seconds                                                     | Bill executes automatically                                                                |
+| 7    | Show payment history                                                | TX hash + Stellar Expert link                                                              |
+| 8    | Show Telegram alert                                                 | Phone notification                                                                         |
+| 9    | Add multisig bill                                                   | Enable 🔐 toggle, add co-signer                                                            |
+| 10   | Switch to co-signer wallet                                          | Approvals tab — pending proposal visible                                                   |
+| 11   | Approve proposal                                                    | Co-signer signs on-chain                                                                   |
+| 12   | Execute proposal                                                    | Proposer clicks Execute — payment sent                                                     |
+| 13   | Show MetricsStrip                                                   | Active Days · Retention · TX Success Rate                                                  |
+| 14   | Show UptimeRobot                                                    | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl) — 100% uptime |
 
 ### Key Technical Points for Q&A
 

@@ -54,22 +54,6 @@ export default function MetricsStrip({ bills, history, analytics }) {
         <span className="metric-value">{completedBills}</span>
         <span className="metric-label">Completed</span>
       </div>
-      {analytics && (
-        <>
-          <div className="metric-card">
-            <span className="metric-value">{analytics.activeDays}</span>
-            <span className="metric-label">Active Days</span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-value">{analytics.retentionDays}d</span>
-            <span className="metric-label">Retention</span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-value">{analytics.successRate}%</span>
-            <span className="metric-label">TX Success Rate</span>
-          </div>
-        </>
-      )}
     </div>
   );
 }

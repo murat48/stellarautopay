@@ -3,6 +3,104 @@ import AddBillForm from './AddBillForm';
 import MultisigModal from './MultisigModal';
 import ApprovalsTab from './ApprovalsTab';
 
+function AnalyticsTab({ analytics, paymentHistory = [], bills = [] }) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const paidThisMonth = paymentHistory
+    .filter((e) => {
+      const s = Array.isArray(e.status) ? e.status[0] : e.status;
+      return s?.toLowerCase() === 'success' && new Date(e.date) >= startOfMonth;
+    })
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+
+  const totalTx     = analytics?.totalTx     ?? paymentHistory.length;
+  const successTx   = analytics?.successTx   ?? paymentHistory.filter((e) => { const s = Array.isArray(e.status) ? e.status[0] : e.status; return s?.toLowerCase() === 'success'; }).length;
+  const failedTx    = analytics?.failedTx    ?? 0;
+  const successRate = analytics?.successRate ?? (totalTx > 0 ? Math.round((successTx / totalTx) * 100) : 0);
+  const activeDays  = analytics?.activeDays  ?? 1;
+  const retention   = analytics?.retentionDays ?? 1;
+  const firstSeen   = analytics?.firstSeen ? new Date(analytics.firstSeen).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const lastSeen    = analytics?.lastSeen  ? new Date(analytics.lastSeen).toLocaleDateString('en-US',  { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+  const completedBills = bills.filter((b) => b.status === 'completed' || b.status === 'paid').length;
+  const activeBills    = bills.filter((b) => b.status === 'active').length;
+
+  return (
+    <div className="analytics-tab">
+      <h3 className="analytics-title">📊 Your Usage Analytics</h3>
+
+      <div className="analytics-section">
+        <h4>Activity</h4>
+        <div className="analytics-grid">
+          <div className="analytics-card">
+            <span className="analytics-value">{activeDays}</span>
+            <span className="analytics-label">Active Days <span className="analytics-sub">(last 90d)</span></span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value">{retention}d</span>
+            <span className="analytics-label">Retention <span className="analytics-sub">(first → last login)</span></span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value">{firstSeen}</span>
+            <span className="analytics-label">First Seen</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value">{lastSeen}</span>
+            <span className="analytics-label">Last Active</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="analytics-section">
+        <h4>Transactions</h4>
+        <div className="analytics-grid">
+          <div className="analytics-card">
+            <span className="analytics-value">{totalTx}</span>
+            <span className="analytics-label">Total TX</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value analytics-success">{successTx}</span>
+            <span className="analytics-label">Successful</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value analytics-failed">{failedTx}</span>
+            <span className="analytics-label">Failed</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value" style={{ color: successRate >= 80 ? '#22c55e' : successRate >= 50 ? '#f59e0b' : '#ef4444' }}>
+              {successRate}%
+            </span>
+            <span className="analytics-label">TX Success Rate</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="analytics-section">
+        <h4>Bills</h4>
+        <div className="analytics-grid">
+          <div className="analytics-card">
+            <span className="analytics-value">{bills.length}</span>
+            <span className="analytics-label">Total Bills</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value analytics-success">{activeBills}</span>
+            <span className="analytics-label">Active</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value">{completedBills}</span>
+            <span className="analytics-label">Completed / Paid</span>
+          </div>
+          <div className="analytics-card">
+            <span className="analytics-value analytics-success">{paidThisMonth.toFixed(2)}</span>
+            <span className="analytics-label">Paid This Month</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function statusBadge(status) {
   const labels = {
     active: 'Active',
@@ -36,7 +134,7 @@ export default function BillDashboard({
   bills, addBill, pauseBill, deleteBill, publicKey, signTransaction,
   pendingProposals, proposalsAsApprover, multisigLoading, multisigError,
   createProposal, approveProposal, rejectProposal, executeProposal,
-  voteHistory, clearVoteHistory, paymentHistory,
+  voteHistory, clearVoteHistory, paymentHistory, analytics,
 }) {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState('unpaid'); // unpaid, recurring, one-time, completed, all, approvals
@@ -89,13 +187,13 @@ export default function BillDashboard({
         <h2>Payments</h2>
         <div className="section-header-actions">
           <div className="filter-tabs">
-            {['unpaid', 'recurring', 'one-time', 'completed', 'all', 'approvals'].map((f) => (
+            {['unpaid', 'recurring', 'one-time', 'completed', 'all', 'approvals', 'analytics'].map((f) => (
               <button
                 key={f}
                 className={`filter-tab ${filter === f ? 'active' : ''}`}
                 onClick={() => setFilter(f)}
               >
-                {f === 'unpaid' ? 'Unpaid' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f === 'all' ? 'All' : f === 'approvals' ? 'Approvals' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'unpaid' ? 'Unpaid' : f === 'one-time' ? 'One-Time' : f === 'completed' ? 'Paid / Done' : f === 'all' ? 'All' : f === 'approvals' ? 'Approvals' : f === 'analytics' ? '📊 Analytics' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -105,7 +203,9 @@ export default function BillDashboard({
         </div>
       </div>
 
-      {filter === 'approvals' ? (
+      {filter === 'analytics' ? (
+        <AnalyticsTab analytics={analytics} paymentHistory={paymentHistory} bills={bills} />
+      ) : filter === 'approvals' ? (
         <ApprovalsTab
           publicKey={publicKey}
           pendingProposals={pendingProposals}
