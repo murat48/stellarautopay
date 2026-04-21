@@ -7,19 +7,20 @@
 
 ## 🔗 Quick Links
 
-|                    |                                                                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Live Demo**      | [https://stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                          |
-| **Video**          | [https://youtu.be/4C31DK4_cxs](https://youtu.be/4C31DK4_cxs)                                                                                                                   |
-| **Smart Contract** | [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)       |
-| **GitHub**         | [https://github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                          |
-| **Network**        | Stellar Testnet                                                                                                                                                                 |
-| **Telegram Bot**   | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot)                                                                                                                          |
-| **Uptime Monitor** | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                                   |
+|                    |                                                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Live Demo**      | [https://stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                  |
+| **Video**          | [https://youtu.be/4C31DK4_cxs](https://youtu.be/4C31DK4_cxs)                                                                                                            |
+| **Smart Contract** | [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
+| **GitHub**         | [https://github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                  |
+| **Network**        | Stellar Testnet                                                                                                                                                         |
+| **Telegram Bot**   | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot)                                                                                                                  |
+| **Uptime Monitor** | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                            |
 
 ---
 
 ## 🎥 Demo Video
+
 [![Watch the demo](screen.jpg)](https://youtu.be/4C31DK4_cxs)
 
 ## 📋 Table of Contents
@@ -502,7 +503,7 @@ stellarautopay/
 | Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                |
 | Community contribution (Twitter/X post)         | ⏳            | Post pending                                                                                                                |
 | Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)            |
-| Exported user responses (Excel/Sheets)          | ✅            | [View Responses](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)  |
+| Exported user responses (Excel/Sheets)          | ✅            | [📥 Download user-feedback.xlsx](docs/user-feedback.xlsx) · [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
 | Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                          |
 
 ---
@@ -529,7 +530,17 @@ All form responses exported to Google Sheets:
 
 **→ [View Feedback Responses & Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)**
 
-To download as Excel: open in Google Sheets → **File → Download → Microsoft Excel (.xlsx)**
+### Exported Excel File
+
+All collected responses are exported and committed to this repository:
+
+**→ [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx)**
+
+The file contains two sheets:
+- **User Feedback** — one row per respondent: Full Name, Email, Stellar Wallet Address, Product Rating, Comments, Submission Date
+- **Summary** — aggregate stats and links
+
+> Rows 8–30+ are added as new responses arrive from the Google Form. The file in this repo is re-exported after each batch of new submissions.
 
 ---
 
