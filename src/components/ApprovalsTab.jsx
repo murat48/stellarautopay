@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPendingProposals, getPaymentHistory } from '../utils/contractClient';
+import { getPaymentHistory } from '../utils/contractClient';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -19,9 +19,8 @@ function statusBadge(status) {
 
 /**
  * ApprovalsTab — shows:
- *   1. Proposals created by the current wallet (Your Proposals)
- *   2. Proposals where this wallet is a required approver, auto-fetched on connect
- *   3. Manual lookup section for edge cases
+ *   1. Pending Approvals — proposals where this wallet is a required approver (pending only)
+ *   2. My Vote History — decisions this wallet has made
  */
 export default function ApprovalsTab({
   publicKey,
@@ -36,45 +35,19 @@ export default function ApprovalsTab({
   clearVoteHistory,
   paymentHistory,
 }) {
-  const [lookupAddress, setLookupAddress] = useState('');
-  const [lookedUpProposals, setLookedUpProposals] = useState(null); // array of Proposal objects
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupError, setLookupError] = useState(null);
-  const [actionPending, setActionPending] = useState(null); // proposalId being acted on
-  // Map<proposerAddress, paymentEntry[]> — fetched from contract to find executed TXes
+  const [actionPending, setActionPending] = useState(null);
   const [proposerHistories, setProposerHistories] = useState({});
 
-  // Fetch payment history for each unique proposer referenced in vote history
   useEffect(() => {
     const uniqueProposers = [...new Set((voteHistory || []).map((v) => v.proposer).filter(Boolean))];
     if (uniqueProposers.length === 0) return;
     uniqueProposers.forEach((proposerAddr) => {
-      if (proposerHistories[proposerAddr]) return; // already fetched
+      if (proposerHistories[proposerAddr]) return;
       getPaymentHistory(proposerAddr)
-        .then((records) => {
-          setProposerHistories((prev) => ({ ...prev, [proposerAddr]: records }));
-        })
-        .catch(() => {
-          setProposerHistories((prev) => ({ ...prev, [proposerAddr]: [] }));
-        });
+        .then((records) => setProposerHistories((prev) => ({ ...prev, [proposerAddr]: records })))
+        .catch(() => setProposerHistories((prev) => ({ ...prev, [proposerAddr]: [] })));
     });
   }, [voteHistory]); // eslint-disable-line
-
-  async function handleLookup() {
-    const target = lookupAddress.trim();
-    if (!target) return;
-    setLookupError(null);
-    setLookupLoading(true);
-    try {
-      // Fetch into local state — does NOT touch the global pendingProposals
-      const results = await getPendingProposals(target);
-      setLookedUpProposals(results);
-    } catch (e) {
-      setLookupError(e?.message || String(e));
-    } finally {
-      setLookupLoading(false);
-    }
-  }
 
   async function handleAction(action, proposerKey, proposalId) {
     setActionPending(proposalId);
@@ -85,15 +58,10 @@ export default function ApprovalsTab({
     }
   }
 
-  // Proposals created by the current user
-  const ownProposals = pendingProposals.filter((p) => p.proposer === publicKey);
-  // proposalsAsApprover comes pre-filtered from the contract (pending only, where wallet is listed as approver)
-
   const renderProposalCard = (proposal) => {
     const thresholdMet = (proposal.approvals || []).length >= proposal.threshold;
     const alreadyApproved = (proposal.approvals || []).includes(publicKey);
     const alreadyRejected = (proposal.rejections || []).includes(publicKey);
-    // Only wallets explicitly listed as required approvers may approve/reject
     const isApprover = (proposal.requiredApprovers || []).includes(publicKey);
     const busy = actionPending === proposal.id;
 
@@ -102,7 +70,11 @@ export default function ApprovalsTab({
         <div className="bill-card-header">
           <h3>{proposal.billName || `Bill #${proposal.billId}`}</h3>
           <div className="bill-badges">
-            {statusBadge(proposal.status)}
+            {alreadyApproved
+              ? <span className="badge badge-approved">✅ Approved</span>
+              : alreadyRejected
+              ? <span className="badge badge-rejected">❌ Rejected</span>
+              : statusBadge(proposal.status)}
           </div>
         </div>
         <div className="bill-card-body">
@@ -125,53 +97,49 @@ export default function ApprovalsTab({
             </span>
           </div>
           <div className="bill-detail">
-            <span className="label">Rejections</span>
-            <span className="value">{(proposal.rejections || []).length}</span>
-          </div>
-          <div className="bill-detail">
-            <span className="label">Co-signers</span>
-            <span className="value">{(proposal.requiredApprovers || []).length}</span>
-          </div>
-          <div className="bill-detail">
             <span className="label">Created</span>
             <span className="value">{formatDate(proposal.createdAt)}</span>
           </div>
         </div>
 
-        {proposal.status === 'pending' && (isApprover || thresholdMet) && (
+        {/* Only show action buttons if not yet voted and still pending */}
+        {proposal.status === 'pending' && isApprover && !alreadyApproved && !alreadyRejected && (
           <div className="bill-card-actions">
-            {isApprover && !alreadyApproved && !alreadyRejected && (
-              <button
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => handleAction(approveProposal, proposal.proposer, proposal.id)}
-              >
-                {busy ? '…' : '✓ Approve'}
-              </button>
-            )}
-            {isApprover && !alreadyRejected && (
-              <button
-                className="btn-danger"
-                disabled={busy}
-                onClick={() => handleAction(rejectProposal, proposal.proposer, proposal.id)}
-              >
-                {busy ? '…' : '✕ Reject'}
-              </button>
-            )}
-            {thresholdMet && (
-              <button
-                className="btn-primary"
-                disabled={busy}
-                onClick={() => handleAction(executeProposal, proposal.proposer, proposal.id)}
-              >
-                {busy ? '…' : '⚡ Execute'}
-              </button>
-            )}
+            <button
+              className="btn-secondary"
+              disabled={busy}
+              onClick={() => handleAction(approveProposal, proposal.proposer, proposal.id)}
+            >
+              {busy ? '…' : '✓ Approve'}
+            </button>
+            <button
+              className="btn-danger"
+              disabled={busy}
+              onClick={() => handleAction(rejectProposal, proposal.proposer, proposal.id)}
+            >
+              {busy ? '…' : '✕ Reject'}
+            </button>
+          </div>
+        )}
+
+        {/* Execute button for proposer when threshold is met */}
+        {proposal.status === 'pending' && thresholdMet && proposal.proposer === publicKey && (
+          <div className="bill-card-actions">
+            <button
+              className="btn-primary"
+              disabled={busy}
+              onClick={() => handleAction(executeProposal, proposal.proposer, proposal.id)}
+            >
+              {busy ? '…' : '⚡ Execute'}
+            </button>
           </div>
         )}
       </div>
     );
   };
+
+  // Only show proposals where this wallet is a required approver (pending status)
+  const pendingForMe = (proposalsAsApprover || []).filter((p) => p.status === 'pending');
 
   return (
     <div className="bill-dashboard">
@@ -185,29 +153,15 @@ export default function ApprovalsTab({
         <div className="empty-state"><p>Loading proposals…</p></div>
       ) : (
         <>
-          {/* Proposals initiated by the connected wallet */}
-          <h3 className="approvals-section-title">Your Proposals</h3>
-          {ownProposals.length === 0 ? (
-            <div className="empty-state"><p>No pending proposals created by your wallet.</p></div>
+          {pendingForMe.length === 0 ? (
+            <div className="empty-state"><p>No proposals awaiting your signature.</p></div>
           ) : (
             <div className="bill-grid">
-              {ownProposals.map(renderProposalCard)}
+              {pendingForMe.map(renderProposalCard)}
             </div>
           )}
 
-          {/* Proposals from other wallets that need this wallet's signature */}
-          {(proposalsAsApprover || []).length > 0 && (
-            <>
-              <h3 className="approvals-section-title" style={{ marginTop: '1.5rem' }}>
-                Awaiting Your Signature
-              </h3>
-              <div className="bill-grid">
-                {(proposalsAsApprover || []).map(renderProposalCard)}
-              </div>
-            </>
-          )}
-
-          {/* My Vote History — decisions this wallet has made on multisig proposals */}
+          {/* My Vote History */}
           {(voteHistory || []).length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2rem' }}>
@@ -227,7 +181,6 @@ export default function ApprovalsTab({
                   </thead>
                   <tbody>
                     {(voteHistory || []).map((entry) => {
-                      // Find a successful payment — check own history first, then proposer's
                       const allCandidates = [
                         ...(paymentHistory || []),
                         ...(proposerHistories[entry.proposer] || []),
@@ -293,43 +246,6 @@ export default function ApprovalsTab({
               </div>
             </>
           )}
-
-          {/* Lookup proposals from another proposer's wallet */}
-          <div className="approvals-lookup" style={{ marginTop: '2rem' }}>
-            <h3 className="approvals-section-title">Look Up Proposals by Proposer</h3>
-            <div className="approver-row">
-              <input
-                type="text"
-                className="form-input mono"
-                placeholder="G... Stellar address"
-                value={lookupAddress}
-                onChange={(e) => setLookupAddress(e.target.value)}
-                spellCheck={false}
-              />
-              <button
-                className="btn-secondary btn-sm"
-                onClick={handleLookup}
-                disabled={lookupLoading || !lookupAddress.trim()}
-              >
-                {lookupLoading ? '…' : 'Look Up'}
-              </button>
-            </div>
-            {lookupError && <div className="error-msg" style={{ marginTop: '0.5rem' }}>{lookupError}</div>}
-            {lookedUpProposals !== null && !lookupLoading && (
-              <>
-                <p className="mono" style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>
-                  Showing proposals for {lookupAddress.trim().slice(0, 8)}...{lookupAddress.trim().slice(-4)}
-                </p>
-                {lookedUpProposals.length === 0 ? (
-                  <div className="empty-state"><p>No pending proposals for that address.</p></div>
-                ) : (
-                  <div className="bill-grid" style={{ marginTop: '1rem' }}>
-                    {lookedUpProposals.map(renderProposalCard)}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </>
       )}
     </div>
