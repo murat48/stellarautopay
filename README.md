@@ -175,11 +175,16 @@ Note: Steps 2 and 3 were signed by **two separate wallets** (`GDYA…GK7M` as pr
 
 ## 📜 Smart Contract
 
-**Contract ID:** `CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`  
+**Contract ID (current):** [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)  
 **Network:** Stellar Testnet  
 **Language:** Rust · Soroban SDK v22  
 **Source:** `contracts/autopay/src/lib.rs`  
 **Explorer:** [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)
+
+> **⚠️ Contract Migration Note**  
+> The original contract **`CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS`** was the initial deployment and does **not** include multi-signature logic.  
+> The current contract **`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`** was redeployed to add `propose_payment`, `approve_proposal`, `reject_proposal`, `execute_proposal` and the full multisig flow.  
+> Wallets that interacted with the old contract (`CCGU4ERO…S5NIS`) will not see their historical data in the current app — all active usage is on the new contract.
 
 ### Exported Functions
 
@@ -560,6 +565,7 @@ The file contains two sheets:
 | 8   | Completed count showed 0 despite paid bills existing           | Fixed metrics to count both `completed` and `paid` statuses                          | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
 | 9   | Telegram instructions in Turkish, hard for international users | Full English UI + QR code for @StellarAutopay_Bot added                              | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
 | 10  | Old contract had stale data from development                   | Redeployed fresh contract to testnet                                                 | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 11  | Initial contract (`CCGU4ERO…S5NIS`) lacked multi-sig support   | Migrated to new contract (`CC3EMSSE…MMYUL`) with full `propose/approve/execute` flow | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
 
 ### Next Phase — Planned Improvements
 
