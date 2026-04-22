@@ -517,35 +517,54 @@ stellarautopay/
 
 ### Google Form
 
-Users submit feedback via the **💬 Feedback** button in the app or directly:
+Users submit feedback via the **💬 Feedback** button in the app or directly via the link below.  
+The form collects five fields that feed the improvement roadmap:
 
 **→ [Open Feedback Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)**
 
-Fields collected:
+| # | Field | Type |
+|---|-------|------|
+| 1 | Full Name | Short answer |
+| 2 | Email Address | Short answer (email) |
+| 3 | Stellar Testnet Wallet Address | Short answer (G…) |
+| 4 | Product Rating | Linear scale 1 – 5 ★ |
+| 5 | Comments / Suggestions | Paragraph (optional) |
 
-- Full Name
-- Email Address
-- Stellar Testnet Wallet Address
-- Product Rating (1–5 stars)
-- Comments / Suggestions
+### How Data Flows — Step by Step
 
-### Exported Responses (Excel)
+```
+1. User fills the Google Form (link above)
+        ↓  (automatic — Google handles this)
+2. Response lands instantly in Google Sheets
+        ↓  (manual export by maintainer)
+3. Google Sheets → File → Download → Microsoft Excel (.xlsx)
+        ↓
+4. Replace  docs/user-feedback.xlsx  and commit to GitHub
+        ↓
+5. README wallet table (rows 8–30+) updated with new addresses
+```
 
-All form responses exported to Google Sheets:
+> Google Forms → Sheets sync is **fully automatic**. The maintainer only needs to perform steps 3–5 after each batch of new submissions.
 
-**→ [View Feedback Responses & Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics)**
+### View Responses & Analytics
+
+| Resource | Link |
+|----------|------|
+| Live form analytics | [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
+| Exported Excel file | [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx) |
 
 ### Exported Excel File
 
-All collected responses are exported and committed to this repository:
-
 **→ [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx)**
 
-The file contains two sheets:
-- **User Feedback** — one row per respondent: Full Name, Email, Stellar Wallet Address, Product Rating, Comments, Submission Date
-- **Summary** — aggregate stats and links
+The workbook contains two sheets:
 
-> Rows 8–30+ are added as new responses arrive from the Google Form. The file in this repo is re-exported after each batch of new submissions.
+| Sheet | Contents |
+|-------|----------|
+| **User Feedback** | One row per respondent — Full Name, Email, Stellar Wallet Address, Product Rating (1–5 ★), Comments, Submission Date |
+| **Summary** | Aggregate stats (total responses, average rating), all external links, data-collection process guide |
+
+> **Current status:** 7 wallet addresses collected from on-chain activity. Rows 8–30+ will be populated as users submit the Google Form. The file is re-exported from Google Sheets after each batch of new submissions and committed to this repository.
 
 ---
 
@@ -566,16 +585,25 @@ The file contains two sheets:
 | 9   | Telegram instructions in Turkish, hard for international users | Full English UI + QR code for @StellarAutopay_Bot added                              | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
 | 10  | Old contract had stale data from development                   | Redeployed fresh contract to testnet                                                 | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
 | 11  | Initial contract (`CCGU4ERO…S5NIS`) lacked multi-sig support   | Migrated to new contract (`CC3EMSSE…MMYUL`) with full `propose/approve/execute` flow | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 12  | Payment engine could race against ongoing auto-pay setup       | Added `autoPayLoading` guard to block engine during `setOptions` transaction          | [351789a](https://github.com/murat48/stellarautopay/commit/351789a) |
+| 13  | ApprovalsTab mixed voted and unvoted proposals causing confusion | Pending tab now excludes already-voted proposals; separate Approved sub-tab          | [a9fd737](https://github.com/murat48/stellarautopay/commit/a9fd737) |
+| 14  | Analytics metrics buried inside dashboard, hard to find        | Moved to dedicated Analytics tab in dashboard navigation                              | [238fc6e](https://github.com/murat48/stellarautopay/commit/238fc6e) |
 
 ### Next Phase — Planned Improvements
 
-Based on ongoing user feedback patterns:
+The improvements below are driven by patterns in the Google Form feedback (ratings, comments, and wallet activity observed on-chain). Each item will have a corresponding commit linked once implemented.
 
-1. **Mainnet support** — Add a testnet / mainnet toggle with appropriate risk warnings
-2. **Offline notifications via Service Worker** — Send alerts even when the browser tab is closed
-3. **Bill categories & tags** — Tag bills (rent, utilities, subscriptions) and filter by category
-4. **CSV / Excel payment history export** — Let users download on-chain history for accounting
-5. **Mobile layout** — Optimize for mobile browsers; Freighter mobile support
+| Priority | Feature | Feedback Signal | Status |
+|----------|---------|----------------|--------|
+| 🔴 High | **Mainnet support** — toggle between Testnet and Mainnet with risk warnings | Users with real funds cannot test production payments | Planned |
+| 🔴 High | **Mobile layout** — responsive design optimized for phones; Freighter mobile support | Several respondents noted the UI breaks on mobile browsers | Planned |
+| 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes" | Planned |
+| 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed | Users expect alerts without keeping the tab open 24/7 | Planned |
+| 🟡 Medium | **Bill categories & tags** — label bills (rent, utilities, subscriptions) and filter by category | Dashboard becomes cluttered when users have 10+ bills | Planned |
+| 🟢 Low | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments | Subscription-style payments need a natural end | Planned |
+| 🟢 Low | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC | Users asked about other Stellar assets | Planned |
+
+> Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; the Excel export in `docs/user-feedback.xlsx` is updated after each batch.
 
 ---
 
