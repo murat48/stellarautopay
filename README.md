@@ -21,7 +21,7 @@
 
 ## 🎥 Demo Video
 
-[![Watch the demo](screen.jpg)](https://youtu.be/4C31DK4_cxs)
+[![Watch the demo](screenv2.jpg)](https://youtu.be/4C31DK4_cxs)
 
 ## 📋 Table of Contents
 
@@ -89,7 +89,7 @@ All bill data and payment history live **on-chain** in a Soroban smart contract.
 
 - Paid this month · Active bills · Due now · Next payment · Completed total
   <br>
-<img src="/metrics.jpg" alt="" width="600"/><br>
+  <img src="/metrics.jpg" alt="" width="600"/><br>
 
 ### ⚠️ Low Balance Warning
 
@@ -489,27 +489,27 @@ stellarautopay/
 
 ## ✅ Submission Checklist
 
-| Requirement                                     | Status        | Link / Proof                                                                                                                |
-| ----------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Public GitHub repository                        | ✅            | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                              |
-| Live demo deployed                              | ✅            | [stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                              |
-| README with complete documentation              | ✅            | This file                                                                                                                   |
-| Minimum 15+ meaningful commits                  | ✅ 37 commits | `git log --oneline`                                                                                                         |
-| Advanced feature: Multi-signature Logic         | ✅            | [Section above](#-advanced-feature-multi-signature-logic)                                                                   |
-| Advanced feature proof (on-chain TX)            | ✅            | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042) |
-| Smart contract deployed                         | ✅            | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
-| Data indexing (Horizon + Soroban RPC)           | ✅            | [Section above](#-data-indexing)                                                                                            |
-| Security checklist                              | ✅            | [Security Model](#-security-model)                                                                                          |
-| User guide (in-app + README)                    | ✅            | [User Guide section](#-user-guide)                                                                                          |
-| User metrics tracking (DAU, retention, TX rate) | ✅            | `useAnalytics.js` + MetricsStrip                                                                                            |
-| Production logging                              | ✅            | `logger.js` (levels + localStorage + download)                                                                              |
-| Metrics dashboard                               | ✅            | Built-in MetricsStrip in app                                                                                                |
-| 30+ user wallet addresses                       | ⏳            | Collecting via Google Form                                                                                                  |
-| Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                |
-| Community contribution (Twitter/X post)         | ⏳            | Post pending                                                                                                                |
-| Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)            |
+| Requirement                                     | Status        | Link / Proof                                                                                                                                                                                |
+| ----------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public GitHub repository                        | ✅            | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                                              |
+| Live demo deployed                              | ✅            | [stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                                              |
+| README with complete documentation              | ✅            | This file                                                                                                                                                                                   |
+| Minimum 15+ meaningful commits                  | ✅ 37 commits | `git log --oneline`                                                                                                                                                                         |
+| Advanced feature: Multi-signature Logic         | ✅            | [Section above](#-advanced-feature-multi-signature-logic)                                                                                                                                   |
+| Advanced feature proof (on-chain TX)            | ✅            | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042)                                                                 |
+| Smart contract deployed                         | ✅            | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)                                                                 |
+| Data indexing (Horizon + Soroban RPC)           | ✅            | [Section above](#-data-indexing)                                                                                                                                                            |
+| Security checklist                              | ✅            | [Security Model](#-security-model)                                                                                                                                                          |
+| User guide (in-app + README)                    | ✅            | [User Guide section](#-user-guide)                                                                                                                                                          |
+| User metrics tracking (DAU, retention, TX rate) | ✅            | `useAnalytics.js` + MetricsStrip                                                                                                                                                            |
+| Production logging                              | ✅            | `logger.js` (levels + localStorage + download)                                                                                                                                              |
+| Metrics dashboard                               | ✅            | Built-in MetricsStrip in app                                                                                                                                                                |
+| 30+ user wallet addresses                       | ⏳            | Collecting via Google Form                                                                                                                                                                  |
+| Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                                                |
+| Community contribution (Twitter/X post)         | ⏳            | Post pending                                                                                                                                                                                |
+| Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)                                                                            |
 | Exported user responses (Excel/Sheets)          | ✅            | [📥 Download user-feedback.xlsx](docs/user-feedback.xlsx) · [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
-| Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                          |
+| Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                                                                                          |
 
 ---
 
@@ -522,13 +522,13 @@ The form collects five fields that feed the improvement roadmap:
 
 **→ [Open Feedback Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)**
 
-| # | Field | Type |
-|---|-------|------|
-| 1 | Full Name | Short answer |
-| 2 | Email Address | Short answer (email) |
-| 3 | Stellar Testnet Wallet Address | Short answer (G…) |
-| 4 | Product Rating | Linear scale 1 – 5 ★ |
-| 5 | Comments / Suggestions | Paragraph (optional) |
+| #   | Field                          | Type                 |
+| --- | ------------------------------ | -------------------- |
+| 1   | Full Name                      | Short answer         |
+| 2   | Email Address                  | Short answer (email) |
+| 3   | Stellar Testnet Wallet Address | Short answer (G…)    |
+| 4   | Product Rating                 | Linear scale 1 – 5 ★ |
+| 5   | Comments / Suggestions         | Paragraph (optional) |
 
 ### How Data Flows — Step by Step
 
@@ -548,10 +548,10 @@ The form collects five fields that feed the improvement roadmap:
 
 ### View Responses & Analytics
 
-| Resource | Link |
-|----------|------|
+| Resource            | Link                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Live form analytics | [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
-| Exported Excel file | [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx) |
+| Exported Excel file | [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx)                                                                           |
 
 ### Exported Excel File
 
@@ -559,10 +559,10 @@ The form collects five fields that feed the improvement roadmap:
 
 The workbook contains two sheets:
 
-| Sheet | Contents |
-|-------|----------|
+| Sheet             | Contents                                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **User Feedback** | One row per respondent — Full Name, Email, Stellar Wallet Address, Product Rating (1–5 ★), Comments, Submission Date |
-| **Summary** | Aggregate stats (total responses, average rating), all external links, data-collection process guide |
+| **Summary**       | Aggregate stats (total responses, average rating), all external links, data-collection process guide                 |
 
 > **Current status:** 7 wallet addresses collected from on-chain activity. Rows 8–30+ will be populated as users submit the Google Form. The file is re-exported from Google Sheets after each batch of new submissions and committed to this repository.
 
@@ -572,36 +572,36 @@ The workbook contains two sheets:
 
 ### Iteration 1 — Completed (based on early tester feedback)
 
-| #   | Problem Reported                                               | Fix Applied                                                                          | Commit                                                              |
-| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| 1   | `mark_paid` and `record_payment` not firing in manual mode     | Added `externalSignFn` parameter so contract writes work without auto-pay            | [55d36b7](https://github.com/murat48/stellarautopay/commit/55d36b7) |
-| 2   | Auto-pay failing with HTTP 400 error                           | Improved error extraction from Horizon `result_codes`; added readable error messages | [fff4287](https://github.com/murat48/stellarautopay/commit/fff4287) |
-| 3   | `op_too_many_signers` when enabling auto-pay                   | Orphaned session keys are now removed atomically in the same transaction             | [65e5c14](https://github.com/murat48/stellarautopay/commit/65e5c14) |
-| 4   | Fees too high (1M stroops per contract call)                   | Reduced Soroban fee to 300K, classic tx fee to 1K stroops                            | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
-| 5   | Multiple Freighter popups for a single payment                 | Eliminated repeated popups in manual mode — one popup per payment                    | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
-| 6   | Telegram test button silently did nothing before saving        | `testConnection` now bypasses `enabled` check, sends directly with provided Chat ID  | [9d872e9](https://github.com/murat48/stellarautopay/commit/9d872e9) |
-| 7   | Dashboard showed all bills by default, hard to find unpaid     | Default filter changed to "Unpaid", sorted soonest-due first                         | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
-| 8   | Completed count showed 0 despite paid bills existing           | Fixed metrics to count both `completed` and `paid` statuses                          | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
-| 9   | Telegram instructions in Turkish, hard for international users | Full English UI + QR code for @StellarAutopay_Bot added                              | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
-| 10  | Old contract had stale data from development                   | Redeployed fresh contract to testnet                                                 | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
-| 11  | Initial contract (`CCGU4ERO…S5NIS`) lacked multi-sig support   | Migrated to new contract (`CC3EMSSE…MMYUL`) with full `propose/approve/execute` flow | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
-| 12  | Payment engine could race against ongoing auto-pay setup       | Added `autoPayLoading` guard to block engine during `setOptions` transaction          | [351789a](https://github.com/murat48/stellarautopay/commit/351789a) |
+| #   | Problem Reported                                                 | Fix Applied                                                                          | Commit                                                              |
+| --- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| 1   | `mark_paid` and `record_payment` not firing in manual mode       | Added `externalSignFn` parameter so contract writes work without auto-pay            | [55d36b7](https://github.com/murat48/stellarautopay/commit/55d36b7) |
+| 2   | Auto-pay failing with HTTP 400 error                             | Improved error extraction from Horizon `result_codes`; added readable error messages | [fff4287](https://github.com/murat48/stellarautopay/commit/fff4287) |
+| 3   | `op_too_many_signers` when enabling auto-pay                     | Orphaned session keys are now removed atomically in the same transaction             | [65e5c14](https://github.com/murat48/stellarautopay/commit/65e5c14) |
+| 4   | Fees too high (1M stroops per contract call)                     | Reduced Soroban fee to 300K, classic tx fee to 1K stroops                            | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
+| 5   | Multiple Freighter popups for a single payment                   | Eliminated repeated popups in manual mode — one popup per payment                    | [bc024a9](https://github.com/murat48/stellarautopay/commit/bc024a9) |
+| 6   | Telegram test button silently did nothing before saving          | `testConnection` now bypasses `enabled` check, sends directly with provided Chat ID  | [9d872e9](https://github.com/murat48/stellarautopay/commit/9d872e9) |
+| 7   | Dashboard showed all bills by default, hard to find unpaid       | Default filter changed to "Unpaid", sorted soonest-due first                         | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 8   | Completed count showed 0 despite paid bills existing             | Fixed metrics to count both `completed` and `paid` statuses                          | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
+| 9   | Telegram instructions in Turkish, hard for international users   | Full English UI + QR code for @StellarAutopay_Bot added                              | [31f2e21](https://github.com/murat48/stellarautopay/commit/31f2e21) |
+| 10  | Old contract had stale data from development                     | Redeployed fresh contract to testnet                                                 | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 11  | Initial contract (`CCGU4ERO…S5NIS`) lacked multi-sig support     | Migrated to new contract (`CC3EMSSE…MMYUL`) with full `propose/approve/execute` flow | [414a760](https://github.com/murat48/stellarautopay/commit/414a760) |
+| 12  | Payment engine could race against ongoing auto-pay setup         | Added `autoPayLoading` guard to block engine during `setOptions` transaction         | [351789a](https://github.com/murat48/stellarautopay/commit/351789a) |
 | 13  | ApprovalsTab mixed voted and unvoted proposals causing confusion | Pending tab now excludes already-voted proposals; separate Approved sub-tab          | [a9fd737](https://github.com/murat48/stellarautopay/commit/a9fd737) |
-| 14  | Analytics metrics buried inside dashboard, hard to find        | Moved to dedicated Analytics tab in dashboard navigation                              | [238fc6e](https://github.com/murat48/stellarautopay/commit/238fc6e) |
+| 14  | Analytics metrics buried inside dashboard, hard to find          | Moved to dedicated Analytics tab in dashboard navigation                             | [238fc6e](https://github.com/murat48/stellarautopay/commit/238fc6e) |
 
 ### Next Phase — Planned Improvements
 
 The improvements below are driven by patterns in the Google Form feedback (ratings, comments, and wallet activity observed on-chain). Each item will have a corresponding commit linked once implemented.
 
-| Priority | Feature | Feedback Signal | Status |
-|----------|---------|----------------|--------|
-| 🔴 High | **Mainnet support** — toggle between Testnet and Mainnet with risk warnings | Users with real funds cannot test production payments | Planned |
-| 🔴 High | **Mobile layout** — responsive design optimized for phones; Freighter mobile support | Several respondents noted the UI breaks on mobile browsers | Planned |
-| 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes" | Planned |
-| 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed | Users expect alerts without keeping the tab open 24/7 | Planned |
-| 🟡 Medium | **Bill categories & tags** — label bills (rent, utilities, subscriptions) and filter by category | Dashboard becomes cluttered when users have 10+ bills | Planned |
-| 🟢 Low | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments | Subscription-style payments need a natural end | Planned |
-| 🟢 Low | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC | Users asked about other Stellar assets | Planned |
+| Priority  | Feature                                                                                            | Feedback Signal                                            | Status  |
+| --------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- |
+| 🔴 High   | **Mainnet support** — toggle between Testnet and Mainnet with risk warnings                        | Users with real funds cannot test production payments      | Planned |
+| 🔴 High   | **Mobile layout** — responsive design optimized for phones; Freighter mobile support               | Several respondents noted the UI breaks on mobile browsers | Planned |
+| 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes"          | Planned |
+| 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed     | Users expect alerts without keeping the tab open 24/7      | Planned |
+| 🟡 Medium | **Bill categories & tags** — label bills (rent, utilities, subscriptions) and filter by category   | Dashboard becomes cluttered when users have 10+ bills      | Planned |
+| 🟢 Low    | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments                  | Subscription-style payments need a natural end             | Planned |
+| 🟢 Low    | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC                          | Users asked about other Stellar assets                     | Planned |
 
 > Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; the Excel export in `docs/user-feedback.xlsx` is updated after each batch.
 
