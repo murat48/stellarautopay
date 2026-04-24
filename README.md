@@ -16,6 +16,7 @@
 | **Network**        | Stellar Testnet                                                                                                                                                         |
 | **Telegram Bot**   | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot)                                                                                                                  |
 | **Uptime Monitor** | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                            |
+| **User Feedback**  | [📊 Live Google Sheets Response Sheet](https://forms.gle/oeyrAsCu5BmyodwC7)                                                                                              |
 
 ---
 ⚠️ Contract Migration Note
@@ -602,19 +603,22 @@ The sheet is synced automatically by Google Forms and contains:
 
 ### Next Phase — Planned Improvements
 
+> **Current status:** Stellar Autopay is running on **Stellar Testnet**. All improvements below target a better testnet experience and preparation for a future mainnet launch.
+
 The improvements below are driven by patterns in the Google Form feedback (ratings, comments, and wallet activity observed on-chain). Each item will have a corresponding commit linked once implemented.
 
-| Priority  | Feature                                                                                            | Feedback Signal                                            | Status  |
-| --------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- |
-| 🔴 High   | **Mainnet support** — toggle between Testnet and Mainnet with risk warnings                        | Users with real funds cannot test production payments      | Planned |
-| 🔴 High   | **Mobile layout** — responsive design optimized for phones; Freighter mobile support               | Several respondents noted the UI breaks on mobile browsers | Planned |
-| 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes"          | Planned |
-| 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed     | Users expect alerts without keeping the tab open 24/7      | Planned |
-| 🟡 Medium | **Bill categories & tags** — label bills (rent, utilities, subscriptions) and filter by category   | Dashboard becomes cluttered when users have 10+ bills      | Planned |
-| 🟢 Low    | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments                  | Subscription-style payments need a natural end             | Planned |
-| 🟢 Low    | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC                          | Users asked about other Stellar assets                     | Planned |
+| Priority  | Feature                                                                                            | Feedback Signal                                                     | Status  |
+| --------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------- |
+| 🔴 High   | **30+ testnet wallet collection** — reach the 30-wallet milestone via Google Form onboarding       | [📊 Response sheet](https://forms.gle/oeyrAsCu5BmyodwC7) live now  | In Progress |
+| 🔴 High   | **Mobile layout** — responsive design optimized for phones; Freighter mobile support               | Several respondents noted the UI breaks on mobile browsers          | Planned |
+| 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes"                   | Planned |
+| 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed     | Users expect alerts without keeping the tab open 24/7               | Planned |
+| 🟡 Medium | **Bill categories & tags** — label bills (rent, utilities, subscriptions) and filter by category   | Dashboard becomes cluttered when users have 10+ bills               | Planned |
+| 🟢 Low    | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments                  | Subscription-style payments need a natural end                      | Planned |
+| 🟢 Low    | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC on testnet              | Users asked about other Stellar assets                              | Planned |
+| 🟢 Low    | **Mainnet preparation** — safety warnings, mainnet toggle, audit checklist before launch           | Future goal after testnet validation is complete                    | Future  |
 
-> Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; responses are visible in real-time in the [live Google Sheets response sheet](https://forms.gle/oeyrAsCu5BmyodwC7).
+> Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; responses are visible in real-time in the [📊 live Google Sheets response sheet](https://forms.gle/oeyrAsCu5BmyodwC7).
 
 ---
 
