@@ -39,7 +39,8 @@
 12. [Submission Checklist](#-submission-checklist)
 13. [User Feedback & Onboarding](#user-feedback--onboarding)
 14. [Improvement Plan](#improvement-plan)
-15. [Demo Day Presentation](#-demo-day-presentation)
+15. [CI/CD Pipeline](#️-cicd-pipeline)
+16. [Demo Day Presentation](#-demo-day-presentation)
 
 ---
 
@@ -489,27 +490,28 @@ stellarautopay/
 
 ## ✅ Submission Checklist
 
-| Requirement                                     | Status        | Link / Proof                                                                                                                                                                                |
-| ----------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public GitHub repository                        | ✅            | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                                              |
-| Live demo deployed                              | ✅            | [stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                                              |
-| README with complete documentation              | ✅            | This file                                                                                                                                                                                   |
-| Minimum 15+ meaningful commits                  | ✅ 37 commits | `git log --oneline`                                                                                                                                                                         |
-| Advanced feature: Multi-signature Logic         | ✅            | [Section above](#-advanced-feature-multi-signature-logic)                                                                                                                                   |
-| Advanced feature proof (on-chain TX)            | ✅            | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042)                                                                 |
-| Smart contract deployed                         | ✅            | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)                                                                 |
-| Data indexing (Horizon + Soroban RPC)           | ✅            | [Section above](#-data-indexing)                                                                                                                                                            |
-| Security checklist                              | ✅            | [Security Model](#-security-model)                                                                                                                                                          |
-| User guide (in-app + README)                    | ✅            | [User Guide section](#-user-guide)                                                                                                                                                          |
-| User metrics tracking (DAU, retention, TX rate) | ✅            | `useAnalytics.js` + MetricsStrip                                                                                                                                                            |
-| Production logging                              | ✅            | `logger.js` (levels + localStorage + download)                                                                                                                                              |
-| Metrics dashboard                               | ✅            | Built-in MetricsStrip in app                                                                                                                                                                |
-| 30+ user wallet addresses                       | ⏳            | Collecting via Google Form                                                                                                                                                                  |
-| Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                                                |
-| Community contribution (Twitter/X post)         | ✅            | [X Post](https://x.com/patriotmurat/status/2046957637900624327)                                                                                                                              |
-| Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)                                                                            |
-| Exported user responses (Excel/Sheets)          | ✅            | [📥 Download user-feedback.xlsx](docs/user-feedback.xlsx) · [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
-| Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                                                                                          |
+| Requirement                                     | Status        | Link / Proof                                                                                                                                                                                         |
+| ----------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public GitHub repository                        | ✅            | [github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                                                       |
+| Live demo deployed                              | ✅            | [stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                                                       |
+| README with complete documentation              | ✅            | This file                                                                                                                                                                                            |
+| Minimum 15+ meaningful commits                  | ✅ 37 commits | `git log --oneline`                                                                                                                                                                                  |
+| Advanced feature: Multi-signature Logic         | ✅            | [Section above](#-advanced-feature-multi-signature-logic)                                                                                                                                            |
+| Advanced feature proof (on-chain TX)            | ✅            | [TX cdc73de3…](https://stellar.expert/explorer/testnet/tx/cdc73de3cbdffb94755a0e66a13b75c06c1ac2c2f80fe32bde1d638638423042)                                                                          |
+| Smart contract deployed                         | ✅            | [CC3EMSSE…MMYUL](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL)                                                                          |
+| Data indexing (Horizon + Soroban RPC)           | ✅            | [Section above](#-data-indexing)                                                                                                                                                                     |
+| Security checklist                              | ✅            | [Security Model](#-security-model)                                                                                                                                                                   |
+| User guide (in-app + README)                    | ✅            | [User Guide section](#-user-guide)                                                                                                                                                                   |
+| User metrics tracking (DAU, retention, TX rate) | ✅            | `useAnalytics.js` + MetricsStrip                                                                                                                                                                     |
+| Production logging                              | ✅            | `logger.js` (levels + localStorage + download)                                                                                                                                                       |
+| Metrics dashboard                               | ✅            | Built-in MetricsStrip in app                                                                                                                                                                         |
+| 30+ user wallet addresses                       | ⏳            | Collecting via Google Form                                                                                                                                                                           |
+| Monitoring dashboard                            | ✅            | [stats.uptimerobot.com/BT6BibZuWl](https://stats.uptimerobot.com/BT6BibZuWl)                                                                                                                         |
+| Community contribution (Twitter/X post)         | ✅            | [X Post](https://x.com/patriotmurat/status/2046957637900624327)                                                                                                                                      |
+| Google Form for user onboarding                 | ✅            | [Open Form](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewform)                                                                                     |
+| Exported user responses (Google Sheets)         | ✅            | [📊 View Live Response Sheet](https://forms.gle/oeyrAsCu5BmyodwC7) · [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
+| Improvement plan with commit links              | ✅            | [Section below](#improvement-plan)                                                                                                                                                                   |
+| CI/CD pipeline (GitHub Actions)                 | ✅            | `.github/workflows/ci.yml` + `.github/workflows/cd.yml`                                                                                                                                              |
 
 ---
 
@@ -548,23 +550,27 @@ The form collects five fields that feed the improvement roadmap:
 
 ### View Responses & Analytics
 
-| Resource            | Link                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Live form analytics | [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
-| Exported Excel file | [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx)                                                                           |
+| Resource                     | Link                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Live form analytics          | [View Form Analytics](https://docs.google.com/forms/d/e/1FAIpQLSfp4qWFnQUWYiruEyvELlv1RJkK7_Q7UtrEXu4Ze-QmYMtb8A/viewanalytics) |
+| Live Google Sheets responses | [📊 View Response Sheet](https://forms.gle/oeyrAsCu5BmyodwC7)                                                                   |
 
-### Exported Excel File
+### Live Google Sheets Response Sheet
 
-**→ [📥 docs/user-feedback.xlsx](docs/user-feedback.xlsx)**
+**→ [📊 View Live Response Sheet](https://forms.gle/oeyrAsCu5BmyodwC7)**
 
-The workbook contains two sheets:
+The sheet is synced automatically by Google Forms and contains:
 
-| Sheet             | Contents                                                                                                             |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **User Feedback** | One row per respondent — Full Name, Email, Stellar Wallet Address, Product Rating (1–5 ★), Comments, Submission Date |
-| **Summary**       | Aggregate stats (total responses, average rating), all external links, data-collection process guide                 |
+| Column          | Contents                                      |
+| --------------- | --------------------------------------------- |
+| Full Name       | Respondent name                               |
+| Email Address   | Contact email                                 |
+| Stellar Wallet  | Testnet wallet address (G…)                   |
+| Product Rating  | 1–5 ★ linear scale                            |
+| Comments        | Free-text suggestions                         |
+| Submission Date | Timestamp added automatically by Google Forms |
 
-> **Current status:** 7 wallet addresses collected from on-chain activity. Rows 8–30+ will be populated as users submit the Google Form. The file is re-exported from Google Sheets after each batch of new submissions and committed to this repository.
+> **Current status:** 7 wallet addresses collected from on-chain activity. The Google Sheet updates in real-time as new form submissions arrive — no manual export step required.
 
 ---
 
@@ -603,9 +609,40 @@ The improvements below are driven by patterns in the Google Form feedback (ratin
 | 🟢 Low    | **Recurring bill end date** — set an expiry so a bill auto-stops after N payments                  | Subscription-style payments need a natural end             | Planned |
 | 🟢 Low    | **Multi-asset support (EURC, USDC bridged)** — extend beyond XLM and USDC                          | Users asked about other Stellar assets                     | Planned |
 
-> Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; the Excel export in `docs/user-feedback.xlsx` is updated after each batch.
+> Commit links will be added to the table above as each feature is implemented. The Google Form continues to collect new feedback; responses are visible in real-time in the [live Google Sheets response sheet](https://forms.gle/oeyrAsCu5BmyodwC7).
 
 ---
+
+## ⚙️ CI/CD Pipeline
+
+Stellar Autopay uses **GitHub Actions** for a fully automated CI/CD pipeline with two workflows:
+
+### Continuous Integration (`.github/workflows/ci.yml`)
+
+Runs on every push and pull request to `main`:
+
+| Job          | Steps                                                      | Trigger   |
+| ------------ | ---------------------------------------------------------- | --------- |
+| **Frontend** | `npm ci` → ESLint → `vite build` → upload `dist/` artifact | push / PR |
+| **Contract** | Rust toolchain → `cargo test` → WASM release build         | push / PR |
+
+### Continuous Deployment (`.github/workflows/cd.yml`)
+
+| Job                   | Trigger                          | Target                                                         |
+| --------------------- | -------------------------------- | -------------------------------------------------------------- |
+| **Production deploy** | Push to `main` (after CI passes) | [stellarautopay.vercel.app](https://stellarautopay.vercel.app) |
+| **Preview deploy**    | Pull request opened/updated      | Unique Vercel preview URL posted as PR comment                 |
+
+### Required Repository Secrets
+
+Add these in **GitHub → Settings → Secrets → Actions**:
+
+| Secret                    | How to get it                                |
+| ------------------------- | -------------------------------------------- |
+| `VERCEL_TOKEN`            | Vercel dashboard → Account Settings → Tokens |
+| `VERCEL_ORG_ID`           | `vercel whoami --json` → `orgId`             |
+| `VERCEL_PROJECT_ID`       | `.vercel/project.json` → `projectId`         |
+| `VITE_TELEGRAM_BOT_TOKEN` | Telegram BotFather                           |
 
 ---
 
