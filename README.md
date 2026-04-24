@@ -20,6 +20,7 @@
 
 ---
 ⚠️ Contract Migration Note
+
 The original contract CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS was the initial deployment and does not include multi-signature logic.
 The current contract CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL was redeployed to add propose_payment, approve_proposal, reject_proposal, execute_proposal and the full multisig flow.
 Wallets that interacted with the old contract (CCGU4ERO…S5NIS) will not see their historical data in the current app — all active usage is on the new contract.
