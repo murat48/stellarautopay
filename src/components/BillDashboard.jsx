@@ -131,7 +131,7 @@ function formatDate(iso) {
 }
 
 export default function BillDashboard({
-  bills, addBill, pauseBill, deleteBill, publicKey, signTransaction,
+  bills, addBill, pauseBill, deleteBill, publicKey, _signTransaction,
   pendingProposals, proposalsAsApprover, multisigLoading, multisigError,
   createProposal, approveProposal, rejectProposal, executeProposal,
   voteHistory, clearVoteHistory, paymentHistory, analytics,

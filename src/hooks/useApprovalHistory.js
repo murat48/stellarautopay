@@ -26,6 +26,7 @@ export default function useApprovalHistory(publicKey) {
   // Reload when wallet switches
   useEffect(() => {
     if (!storageKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVoteHistory([]);
       return;
     }

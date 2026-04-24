@@ -21,7 +21,7 @@ function getStore() {
 }
 
 function saveStore(store) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch { /* ignore */ }
 }
 
 export default function useAnalytics(publicKey, paymentHistory = []) {
@@ -80,6 +80,7 @@ export default function useAnalytics(publicKey, paymentHistory = []) {
     const failedTx  = paymentHistory.filter(isFailed).length;
     const successRate = totalTx > 0 ? Math.round((successTx / totalTx) * 100) : 0;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMetrics({
       activeDays:    wallet.sessions.length,
       firstSeen:     wallet.firstSeen,

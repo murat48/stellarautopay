@@ -1,4 +1,4 @@
-export default function MetricsStrip({ bills, history, analytics }) {
+export default function MetricsStrip({ bills, history, _analytics }) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -11,7 +11,7 @@ export default function MetricsStrip({ bills, history, analytics }) {
   const oneTimeBills = activeBills.filter((b) => b.type === 'one-time');
   const completedBills = bills.filter((b) => b.status === 'completed' || b.status === 'paid').length;
 
-  const pendingBills = activeBills.filter(
+  const _pendingBills = activeBills.filter(
     (b) => new Date(b.nextDueDate) > now
   ).length;
 

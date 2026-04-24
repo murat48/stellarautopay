@@ -24,7 +24,7 @@ function statusBadge(status) {
  */
 export default function ApprovalsTab({
   publicKey,
-  pendingProposals,
+  _pendingProposals,
   proposalsAsApprover,
   loading,
   error,

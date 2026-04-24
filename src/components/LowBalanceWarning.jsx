@@ -1,5 +1,4 @@
 export default function LowBalanceWarning({ balances, bills }) {
-  const now = new Date();
   const upcoming = bills.filter(
     (b) => b.status === 'active' || b.status === 'low_balance'
   );

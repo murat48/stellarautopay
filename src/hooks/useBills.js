@@ -19,7 +19,7 @@ const CACHE_KEY     = 'stellar_autopay_bills_cache';
 // This does NOT trigger transactions — it only blocks them.
 const PAID_KEYS_KEY = 'stellar_autopay_paid_keys';
 
-function loadCache() {
+function _loadCache() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -28,7 +28,7 @@ function loadCache() {
   }
 }
 function saveCache(bills) {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(bills)); } catch {}
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(bills)); } catch { /* ignore */ }
 }
 
 export function loadPaidKeys() {
@@ -44,7 +44,7 @@ function savePaidKey(key) {
     const keys = loadPaidKeys();
     keys.add(key);
     localStorage.setItem(PAID_KEYS_KEY, JSON.stringify([...keys]));
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export default function useBills(publicKey, signTransaction, getSessionKeypair) {

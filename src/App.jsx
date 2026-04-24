@@ -21,7 +21,7 @@ import FeedbackForm from './components/FeedbackForm';
 
 function App() {
   const wallet = useWallet();
-  const { bills, addBill, updateBill, completeBill, markBillPaid, pauseBill, deleteBill, fetchBills, contractReady, loading: billsLoading, error: billsError } = useBills(
+  const { bills, addBill, updateBill, completeBill, markBillPaid, pauseBill, deleteBill, fetchBills: _fetchBills, contractReady, loading: _billsLoading, error: billsError } = useBills(
     wallet.publicKey,
     wallet.signTransaction,
     wallet.getSessionKeypair
@@ -44,7 +44,7 @@ function App() {
     createProposal: createProposalBase,
     approveProposal: approveProposalBase,
     rejectProposal: rejectProposalBase,
-    executeProposal: executeProposalOnChain,
+    executeProposal: _executeProposalOnChain,
   } = useMultisig(wallet.publicKey, wallet.signTransaction);
 
   const { voteHistory, recordVote, clearVoteHistory } = useApprovalHistory(wallet.publicKey);
@@ -69,6 +69,7 @@ function App() {
   }
 
   // Wrap approve/reject to record vote history and send Telegram notifications
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const approveProposal = useCallback(async (proposerKey, proposalId) => {
     // Capture proposal data before the base call mutates state
     const proposal = [...pendingProposals, ...proposalsAsApprover].find(
@@ -89,6 +90,7 @@ function App() {
     }
   }, [approveProposalBase, pendingProposals, proposalsAsApprover, bills, wallet.publicKey, sendTelegramMessage, recordVote]); // eslint-disable-line
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const rejectProposal = useCallback(async (proposerKey, proposalId) => {
     // Capture proposal data before the base call mutates state
     const proposal = [...pendingProposals, ...proposalsAsApprover].find(
