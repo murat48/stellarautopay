@@ -609,7 +609,6 @@ The improvements below are driven by patterns in the Google Form feedback (ratin
 
 | Priority  | Feature                                                                                            | Feedback Signal                                                     | Status  |
 | --------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------- |
-| 🔴 High   | **30+ testnet wallet collection** — reach the 30-wallet milestone via Google Form onboarding       | [📊 Response sheet](https://forms.gle/oeyrAsCu5BmyodwC7) live now  | In Progress |
 | 🔴 High   | **Mobile layout** — responsive design optimized for phones; Freighter mobile support               | Several respondents noted the UI breaks on mobile browsers          | Planned |
 | 🟡 Medium | **CSV / Excel payment history export** — download on-chain payment records for personal accounting | Requested in comments: "need to export for taxes"                   | Planned |
 | 🟡 Medium | **Offline notifications via Service Worker** — push alerts even when the browser tab is closed     | Users expect alerts without keeping the tab open 24/7               | Planned |
