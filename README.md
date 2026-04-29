@@ -10,8 +10,9 @@
 |                    |                                                                                                                                                                         |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Live Demo**      | [https://stellarautopay.vercel.app](https://stellarautopay.vercel.app)                                                                                                  |
-| **Video**          | [https://youtu.be/4C31DK4_cxs](https://youtu.be/4C31DK4_cxs)                                                                                                            |
-| **Smart Contract** | [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
+| **Video**          | [https://youtu.be/4C31DK4_cxs](https://youtu.be/4C31DK4_cxs)   
+| **Old Smart Contract** | [`CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS`](https://stellar.expert/explorer/testnet/contract/CCGU4EROJG3XVYIRGE5TOYDVUOOCRSPUCSUF4QCHRY3KEBFVLQGS5NIS) ||
+| **New Smart Contract** | [`CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL`](https://stellar.expert/explorer/testnet/contract/CC3EMSSEYBKKMELWHKTQV422U2RJJ5FIN5CKBMJF2RPPUHSIGGKMMYUL) |
 | **GitHub**         | [https://github.com/murat48/stellarautopay](https://github.com/murat48/stellarautopay)                                                                                  |
 | **Network**        | Stellar Testnet                                                                                                                                                         |
 | **Telegram Bot**   | [@StellarAutopay_Bot](https://t.me/StellarAutopay_Bot)                                                                                                                  |
